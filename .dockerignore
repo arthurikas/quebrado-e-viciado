@@ -1,0 +1,9 @@
+node_modules
+dist
+.git
+.gemini
+brain
+*.log
+.env
+db_check_result.txt
+git_path.txt
