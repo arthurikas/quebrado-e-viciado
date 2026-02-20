@@ -163,6 +163,43 @@ function AppContent() {
     }
   }, [isAuthenticated, isAdmin, guestMode]);
 
+  // Check for missing configuration
+  const isConfigMissing = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+  if (isConfigMissing) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        background: '#fff3cd',
+        color: '#856404',
+        padding: '2rem',
+        textAlign: 'center',
+        fontFamily: 'system-ui'
+      }}>
+        <div style={{ maxWidth: '600px', border: '2px solid #ffeeba', padding: '2rem', borderRadius: '12px' }}>
+          <h2 style={{ marginBottom: '1rem' }}>⚠️ Erro de Configuração</h2>
+          <p style={{ marginBottom: '1.5rem' }}>
+            As credenciais do Supabase não foram encontradas. Isso acontece quando as variáveis de ambiente
+            <strong> VITE_SUPABASE_URL</strong> e <strong>VITE_SUPABASE_ANON_KEY</strong> não são passadas
+            corretamente durante o build no Easypanel.
+          </p>
+          <div style={{ textAlign: 'left', background: '#fff', padding: '1rem', borderRadius: '8px', fontSize: '0.9rem' }}>
+            <p><strong>Como resolver:</strong></p>
+            <ol style={{ marginLeft: '1.5rem', marginTop: '0.5rem' }}>
+              <li>Vá no seu projeto no Easypanel</li>
+              <li>Acesse a aba <strong>Build</strong></li>
+              <li>Adicione as variáveis nos <strong>Build Arguments</strong></li>
+              <li>Clique em <strong>Deploy</strong> novamente</li>
+            </ol>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   // Show loading while checking authentication
   if (loading) {
     return (
