@@ -3,11 +3,19 @@ FROM node:18-alpine AS build
 
 WORKDIR /app
 
-# Copy package files first for better caching
+# Copy package files first
 COPY frontend/package*.json ./frontend/
 
 # Install dependencies
 RUN cd frontend && npm install
+
+# Pass build arguments for Vite environment variables
+ARG VITE_SUPABASE_URL
+ARG VITE_SUPABASE_ANON_KEY
+
+# Set them as environment variables for the build process
+ENV VITE_SUPABASE_URL=$VITE_SUPABASE_URL
+ENV VITE_SUPABASE_ANON_KEY=$VITE_SUPABASE_ANON_KEY
 
 # Copy the rest of the frontend source
 COPY frontend/ ./frontend/
