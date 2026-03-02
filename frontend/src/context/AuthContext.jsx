@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect, useRef } from 'react';
+import React, { createContext, useContext, useState, useEffect } from 'react';
 import { supabase } from '../config/supabaseClient';
 
 const AuthContext = createContext();
@@ -16,35 +16,34 @@ export const AuthProvider = ({ children }) => {
     const [profile, setProfile] = useState(null);
     const [isAuthenticated, setIsAuthenticated] = useState(false);
     const [loading, setLoading] = useState(true);
-    const profileLoaded = useRef(false);
 
+    // On mount: check for existing session only
     useEffect(() => {
-        let mounted = true;
+        let ignore = false;
 
-        const initSession = async () => {
+        const init = async () => {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
-                if (session?.user && mounted) {
-                    await loadUserProfile(session.user);
+                if (session?.user && !ignore) {
+                    const perfil = await fetchProfile(session.user.id);
+                    if (perfil && !ignore) {
+                        setUser(session.user);
+                        setProfile(perfil);
+                        setIsAuthenticated(true);
+                    }
                 }
             } catch (err) {
-                console.warn('AuthProvider: init error (ignorado):', err.message);
+                console.warn('AuthProvider init:', err.message);
             } finally {
-                if (mounted) setLoading(false);
+                if (!ignore) setLoading(false);
             }
         };
 
-        initSession();
+        init();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            if (!mounted) return;
-
-            if (event === 'SIGNED_IN' && session?.user) {
-                if (!profileLoaded.current) {
-                    await loadUserProfile(session.user);
-                }
-            } else if (event === 'SIGNED_OUT') {
-                profileLoaded.current = false;
+        // Only listen for SIGN OUT — login() handles SIGN IN directly
+        const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
+            if (event === 'SIGNED_OUT') {
                 setUser(null);
                 setProfile(null);
                 setIsAuthenticated(false);
@@ -52,96 +51,75 @@ export const AuthProvider = ({ children }) => {
         });
 
         return () => {
-            mounted = false;
+            ignore = true;
             subscription?.unsubscribe();
         };
     }, []);
 
-    const loadUserProfile = async (authUser) => {
-        try {
-            const { data: perfil, error } = await supabase
-                .from('perfis')
-                .select('*')
-                .eq('id', authUser.id)
-                .single();
+    const fetchProfile = async (userId) => {
+        const { data, error } = await supabase
+            .from('perfis')
+            .select('*')
+            .eq('id', userId)
+            .single();
 
-            if (error) throw error;
-            if (!perfil) throw new Error('Perfil não encontrado');
-
-            setUser(authUser);
-            setProfile(perfil);
-            setIsAuthenticated(true);
-            profileLoaded.current = true;
-            return perfil;
-        } catch (error) {
-            console.error('AuthProvider: erro ao carregar perfil:', error.message);
-            setUser(null);
-            setProfile(null);
-            setIsAuthenticated(false);
-            profileLoaded.current = false;
-            throw error;
+        if (error) {
+            console.error('fetchProfile error:', error.message);
+            return null;
         }
+        return data;
     };
 
     const login = async (email, password) => {
         try {
-            profileLoaded.current = false;
+            const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
-            const { data, error } = await supabase.auth.signInWithPassword({
-                email,
-                password
-            });
-
-            if (error) throw error;
-            if (!data.user) throw new Error('Nenhum usuário retornado');
-
-            const userProfile = await loadUserProfile(data.user);
-            return { success: true, profile: userProfile };
-        } catch (error) {
-            console.error('AuthProvider: erro no login:', error);
-
-            let friendlyError = error.message;
-            if (error.name === 'AbortError') {
-                friendlyError = 'Conexão instável. Tente novamente.';
-            } else if (error.message === 'Invalid login credentials') {
-                friendlyError = 'Email ou senha incorretos';
-            } else if (error.message === 'Email not confirmed') {
-                friendlyError = 'Por favor, confirme seu email antes de entrar';
+            if (error) {
+                let msg = error.message;
+                if (msg === 'Invalid login credentials') msg = 'Email ou senha incorretos';
+                if (msg === 'Email not confirmed') msg = 'Confirme seu email antes de entrar';
+                return { success: false, error: msg };
             }
 
-            return { success: false, error: friendlyError };
+            if (!data.user) {
+                return { success: false, error: 'Nenhum usuário retornado' };
+            }
+
+            const perfil = await fetchProfile(data.user.id);
+            if (!perfil) {
+                return { success: false, error: 'Perfil não encontrado no sistema' };
+            }
+
+            setUser(data.user);
+            setProfile(perfil);
+            setIsAuthenticated(true);
+
+            return { success: true, profile: perfil };
+        } catch (error) {
+            console.error('Login error:', error);
+            return { success: false, error: 'Erro de conexão. Tente novamente.' };
         }
     };
 
     const logout = async () => {
         try {
             await supabase.auth.signOut();
-        } catch (error) {
-            console.error('Erro no logout:', error);
-        } finally {
-            profileLoaded.current = false;
-            setUser(null);
-            setProfile(null);
-            setIsAuthenticated(false);
+        } catch (err) {
+            console.error('Logout error:', err);
         }
+        setUser(null);
+        setProfile(null);
+        setIsAuthenticated(false);
     };
 
     const isAdmin = () => profile?.tipo_acesso === 'admin';
     const isColaborador = () => profile?.tipo_acesso === 'colaborador';
 
-    const value = {
-        user,
-        profile,
-        isAuthenticated,
-        loading,
-        login,
-        logout,
-        isAdmin,
-        isColaborador
-    };
-
     return (
-        <AuthContext.Provider value={value}>
+        <AuthContext.Provider value={{
+            user, profile, isAuthenticated, loading,
+            login, logout, isAdmin, isColaborador
+        }}>
             {children}
         </AuthContext.Provider>
     );
