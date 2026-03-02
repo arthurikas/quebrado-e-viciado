@@ -25,10 +25,10 @@ export const AuthProvider = ({ children }) => {
             try {
                 const { data: { session } } = await supabase.auth.getSession();
                 if (session?.user && !ignore) {
-                    const perfil = await fetchProfile(session.user.id);
-                    if (perfil && !ignore) {
+                    const result = await fetchProfile(session.user.id);
+                    if (result.profile && !ignore) {
                         setUser(session.user);
-                        setProfile(perfil);
+                        setProfile(result.profile);
                         setIsAuthenticated(true);
                     }
                 }
@@ -57,17 +57,18 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const fetchProfile = async (userId) => {
+        // Try with .single() first
         const { data, error } = await supabase
             .from('perfis')
             .select('*')
             .eq('id', userId)
-            .single();
+            .maybeSingle();
 
         if (error) {
-            console.error('fetchProfile error:', error.message);
-            return null;
+            console.error('fetchProfile error:', error.code, error.message, error.details);
+            return { profile: null, dbError: error.message };
         }
-        return data;
+        return { profile: data, dbError: null };
     };
 
     const login = async (email, password) => {
@@ -85,16 +86,24 @@ export const AuthProvider = ({ children }) => {
                 return { success: false, error: 'Nenhum usuário retornado' };
             }
 
-            const perfil = await fetchProfile(data.user.id);
-            if (!perfil) {
-                return { success: false, error: 'Perfil não encontrado no sistema' };
+            // Small delay to ensure auth token is fully propagated
+            await new Promise(r => setTimeout(r, 500));
+
+            const result = await fetchProfile(data.user.id);
+
+            if (result.dbError) {
+                return { success: false, error: `Erro no banco: ${result.dbError}` };
+            }
+
+            if (!result.profile) {
+                return { success: false, error: `Perfil não encontrado para o ID ${data.user.id.substring(0, 8)}...` };
             }
 
             setUser(data.user);
-            setProfile(perfil);
+            setProfile(result.profile);
             setIsAuthenticated(true);
 
-            return { success: true, profile: perfil };
+            return { success: true, profile: result.profile };
         } catch (error) {
             console.error('Login error:', error);
             return { success: false, error: 'Erro de conexão. Tente novamente.' };
