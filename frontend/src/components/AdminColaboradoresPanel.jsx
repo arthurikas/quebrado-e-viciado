@@ -187,12 +187,13 @@ export default function AdminColaboradoresPanel() {
             if (authError) throw authError;
             if (!authData.user) throw new Error('Falha ao criar usuário');
 
-            // Update profile in perfis table
+            // Update profile in perfis table (auto-assign same empresa as admin)
             const { error: perfilError } = await supabase
                 .from('perfis')
                 .update({
                     nome_completo: nome,
                     tipo_acesso: 'colaborador',
+                    empresa_id: profile?.empresa_id || null,
                     ativo: true
                 })
                 .eq('id', authData.user.id);
