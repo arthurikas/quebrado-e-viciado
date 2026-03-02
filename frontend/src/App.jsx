@@ -521,7 +521,7 @@ function AppContent() {
   // Responsive Margin
 
   return (
-    <div className="App" style={{ display: 'flex' }}>
+    <div className="App" style={{ display: 'flex' }} translate="no">
       {!guestMode && <Sidebar currentView={currentView} setView={setCurrentView} />}
 
       <main style={{

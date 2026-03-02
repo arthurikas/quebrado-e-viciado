@@ -40,12 +40,6 @@ export const AuthProvider = ({ children }) => {
     const checkSession = async () => {
         console.log("AuthProvider: checkSession iniciado...");
 
-        // GARANTIA: Em 5 segundos o loading PARARÁ mesmo que o Supabase trave
-        const failsafe = setTimeout(() => {
-            console.log("AuthProvider: Failsafe acionado (5s). Liberando tela.");
-            setLoading(false);
-        }, 5000);
-
         try {
             const { data: { session }, error } = await supabase.auth.getSession();
 
@@ -63,7 +57,6 @@ export const AuthProvider = ({ children }) => {
             console.error('AuthProvider: Falha na verificação:', error);
         } finally {
             console.log("AuthProvider: checkSession finalizado.");
-            clearTimeout(failsafe);
             setLoading(false);
         }
     };
@@ -71,18 +64,11 @@ export const AuthProvider = ({ children }) => {
     const loadUserProfile = async (authUser) => {
         console.log("AuthProvider: Carregando perfil para:", authUser.id);
         try {
-            // Timeout de 5 segundos para a query do perfil
-            const profilePromise = supabase
+            const { data: perfil, error } = await supabase
                 .from('perfis')
                 .select('*, empresas(*)')
                 .eq('id', authUser.id)
                 .single();
-
-            const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("Timeout ao carregar perfil")), 5000)
-            );
-
-            const { data: perfil, error } = await Promise.race([profilePromise, timeoutPromise]);
 
             if (error) {
                 console.error("AuthProvider: Erro na query de perfis:", error);
@@ -103,7 +89,7 @@ export const AuthProvider = ({ children }) => {
             setUser(null);
             setProfile(null);
             setIsAuthenticated(false);
-            throw error; // Repassa o erro para o login tratar
+            throw error;
         }
     };
 

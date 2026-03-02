@@ -1,0 +1,26 @@
+﻿{
+    "Companies":  {
+                      "value":  [
+                                    {
+                                        "id":  "1623285f-3448-4579-8588-f4e22c890558",
+                                        "nome":  "normalizze teste 1"
+                                    },
+                                    {
+                                        "id":  "c0c79a76-3be8-4d3c-b665-1fbdc139427b",
+                                        "nome":  "Normalizze teste"
+                                    }
+                                ],
+                      "Count":  2
+                  },
+    "Profiles":  {
+                     "value":  [
+                                   {
+                                       "id":  "8e08166f-0cf8-4175-b413-73ae27fe0c0d",
+                                       "nome_completo":  "Arthur Ricardo",
+                                       "empresa_id":  null,
+                                       "tipo_acesso":  "admin"
+                                   }
+                               ],
+                     "Count":  1
+                 }
+}

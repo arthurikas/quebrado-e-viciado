@@ -186,9 +186,9 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                                 style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                             >
                                 <option value="">Selecione...</option>
-                                <option value="Masculino">Masculino</option>
-                                <option value="Feminino">Feminino</option>
-                                <option value="Outro">Outro</option>
+                                <option value="M">Masculino</option>
+                                <option value="F">Feminino</option>
+                                <option value="O">Outro</option>
                             </select>
                         </div>
 
@@ -206,7 +206,6 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                         </div>
                     </div>
 
-                    {/* Tempo de Empresa */}
                     <div style={{ marginBottom: '1rem' }}>
                         <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>Tempo de Empresa (anos) *</label>
                         <input
@@ -214,10 +213,17 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                             step="0.1"
                             className="input-field"
                             value={personData.tenure}
-                            onChange={e => setPersonData({ ...personData, tenure: e.target.value })}
-                            placeholder="Ex: 2.5"
+                            onChange={e => {
+                                // Prevent leading zeros and ensure clean numbers
+                                const val = e.target.value;
+                                setPersonData({ ...personData, tenure: val });
+                            }}
+                            placeholder="Ex: 8 ou 2.5"
                             style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                         />
+                        <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.25rem' }}>
+                            Insira apenas o número de anos (ex: use 8 em vez de 08).
+                        </p>
                     </div>
 
                 </div>
