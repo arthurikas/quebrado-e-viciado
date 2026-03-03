@@ -294,22 +294,26 @@ export default function AdminColaboradoresPanel() {
     };
 
     const handleDeleteOperador = async (op) => {
-        if (!window.confirm(`TEM CERTEZA QUE DESEJA EXCLUIR PERMANENTEMENTE o acesso de ${op.nome_completo}? Esta ação não pode ser desfeita.`)) return;
+        if (!window.confirm(`TEM CERTEZA QUE DESEJA EXCLUIR PERMANENTEMENTE o acesso de ${op.nome_completo}? Esta ação não pode ser desfeita e removerá o email da base de autenticação.`)) return;
 
         setLoading(true);
         try {
-            const { error } = await supabase
-                .from('perfis')
-                .delete()
-                .eq('id', op.id);
+            // Chamar função SQL administrativa para deletar do Auth e do Perfil simultaneamente
+            const { error } = await supabase.rpc('delete_user_full', { target_user_id: op.id });
 
-            if (error) throw error;
+            if (error) {
+                // Caso a função RPC ainda não exista no banco de dados
+                if (error.message?.includes('does not exist')) {
+                    throw new Error('A função de exclusão completa ainda não foi configurada no banco de dados. Por favor, execute o script SQL fornecido no painel do Supabase.');
+                }
+                throw error;
+            }
 
             await loadData(true);
-            setMessage({ type: 'success', text: 'Acesso excluído permanentemente!' });
+            setMessage({ type: 'success', text: 'Acesso excluído permanentemente do sistema e da autenticação!' });
         } catch (error) {
             console.error('Erro ao excluir:', error);
-            setMessage({ type: 'error', text: 'Falha ao excluir o acesso: ' + (error.message || 'Erro de permissão.') });
+            setMessage({ type: 'error', text: 'Falha ao excluir: ' + (error.message || 'Erro de permissão.') });
         } finally {
             setLoading(false);
         }
