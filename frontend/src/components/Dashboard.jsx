@@ -7,6 +7,7 @@ import { useCompany } from '../context/CompanyContext';
 
 export default function Dashboard({ evaluationsList = [], onBack }) {
     const { companies = [], activeCompanyId, setActiveCompanyId, activeSectors = [], activeRoles = [] } = useCompany();
+    const [activeTab, setActiveTab] = useState('charts'); // 'charts', 'action-plan', 'history'
 
     // Local Filter State
     const [filters, setFilters] = useState({
@@ -180,123 +181,200 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                 </div>
             </div>
 
-            {/* Responsive Grid for Charts */}
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-
-                {/* Card 1: Radar PROART Média */}
-                <div className="card">
-                    <h3>Média Psicossocial (Baseada no COPSOQ II)</h3>
-                    <div style={{ height: '300px', width: '100%' }}>
-                        {radarData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
-                                    <PolarGrid />
-                                    <PolarAngleAxis dataKey="area" />
-                                    <PolarRadiusAxis angle={30} domain={[0, 100]} tickCount={6} />
-                                    <Radar name="Média Grupo" dataKey="media" stroke="#2e7d32" fill="#2e7d32" fillOpacity={0.6} />
-                                    <Tooltip />
-                                </RadarChart>
-                            </ResponsiveContainer>
-                        ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados.</p>}
-                    </div>
-                    {/* Risco Levels Legend */}
-                    <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
-                        <span style={{ color: '#e53935' }}>● Alto (0-49)</span>
-                        <span style={{ color: '#ffa726' }}>● Médio (50-74)</span>
-                        <span style={{ color: '#4caf50' }}>● Baixo (75-100)</span>
-                    </div>
-                </div>
-
-                {/* Card 2: AEP Gauge Média */}
-                <div className="card">
-                    <h3>Conformidade Ergonômica Média</h3>
-                    <div style={{ height: '200px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
-                        <PieChart width={200} height={200}>
-                            <Pie
-                                data={gaugeData}
-                                cx="50%"
-                                cy="50%"
-                                innerRadius={60}
-                                outerRadius={80}
-                                startAngle={180}
-                                endAngle={0}
-                                dataKey="value"
-                            >
-                                <Cell key="score" fill={gaugeColor} />
-                                <Cell key="empty" fill="#eeeeee" />
-                            </Pie>
-                        </PieChart>
-                        <h1 style={{ marginTop: '-100px', color: gaugeColor }}>{aepGlobalAvg}%</h1>
-                        <p style={{ marginTop: '20px' }}>Índice Global do Grupo</p>
-                    </div>
-                </div>
-                {/* Card 3: AEP Domains Breakdown */}
-                <div className="card" style={{ gridColumn: 'span 2' }}>
-                    <h3>Análise de Conformidade por Domínio (AEP)</h3>
-                    <div style={{ height: '300px', width: '100%', marginTop: '1rem' }}>
-                        {aepDomainData.length > 0 ? (
-                            <ResponsiveContainer width="100%" height="100%">
-                                <BarChart
-                                    data={aepDomainData}
-                                    layout="vertical"
-                                    margin={{ top: 5, right: 30, left: 150, bottom: 5 }}
-                                >
-                                    <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                    <XAxis type="number" domain={[0, 100]} />
-                                    <YAxis
-                                        type="category"
-                                        dataKey="dominio"
-                                        width={140}
-                                        style={{ fontSize: '11px' }}
-                                    />
-                                    <Tooltip />
-                                    <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
-                                        {aepDomainData.map((entry, index) => (
-                                            <Cell key={`cell-${index}`} fill={entry.valor > 80 ? '#27AE60' : entry.valor > 60 ? '#F39C12' : '#E74C3C'} />
-                                        ))}
-                                    </Bar>
-                                </BarChart>
-                            </ResponsiveContainer>
-                        ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados de AEP para exibir o detalhamento.</p>}
-                    </div>
-                </div>
+            {/* Tab Bar */}
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', borderBottom: '2px solid #e0e0e0', paddingBottom: '0.5rem' }}>
+                <button
+                    onClick={() => setActiveTab('charts')}
+                    style={{
+                        padding: '0.75rem 1.5rem', background: 'transparent', border: 'none',
+                        borderBottom: activeTab === 'charts' ? '3px solid #1b4d3e' : 'none',
+                        color: activeTab === 'charts' ? '#1b4d3e' : '#666', fontWeight: 600, cursor: 'pointer'
+                    }}
+                >
+                    Resumo Gráfico
+                </button>
+                <button
+                    onClick={() => setActiveTab('action-plan')}
+                    style={{
+                        padding: '0.75rem 1.5rem', background: 'transparent', border: 'none',
+                        borderBottom: activeTab === 'action-plan' ? '3px solid #d32f2f' : 'none',
+                        color: activeTab === 'action-plan' ? '#d32f2f' : '#666', fontWeight: 600, cursor: 'pointer'
+                    }}
+                >
+                    Plano de Ação Imediato (AEP)
+                </button>
+                <button
+                    onClick={() => setActiveTab('history')}
+                    style={{
+                        padding: '0.75rem 1.5rem', background: 'transparent', border: 'none',
+                        borderBottom: activeTab === 'history' ? '3px solid #2e7d32' : 'none',
+                        color: activeTab === 'history' ? '#2e7d32' : '#666', fontWeight: 600, cursor: 'pointer'
+                    }}
+                >
+                    Histórico de Aplicações
+                </button>
             </div>
 
-            {/* Card 4: Action Plan */}
-            <div className="card" style={{ marginTop: '1.5rem', borderLeft: '4px solid #e53935' }}>
-                <h3>Plano de Ação Imediato (AEP)</h3>
-                <p style={{ marginBottom: '1rem', fontSize: '0.9rem' }}>Itens reprovados ("Não") que requerem correção.</p>
+            {/* Tab Content */}
+            <div key={`stage-${activeTab}`} style={{ position: 'relative', minHeight: '300px' }}>
+                {/* 1. Charts Tab */}
+                {activeTab === 'charts' && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
+                        {/* Radar PROART */}
+                        <div className="card">
+                            <h3>Média Psicossocial (COPSOQ II)</h3>
+                            <div style={{ height: '300px', width: '100%' }}>
+                                {radarData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                                            <PolarGrid />
+                                            <PolarAngleAxis dataKey="area" />
+                                            <PolarRadiusAxis angle={30} domain={[0, 100]} tickCount={6} />
+                                            <Radar name="Média Grupo" dataKey="media" stroke="#2e7d32" fill="#2e7d32" fillOpacity={0.6} />
+                                            <Tooltip />
+                                        </RadarChart>
+                                    </ResponsiveContainer>
+                                ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados.</p>}
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
+                                <span style={{ color: '#e53935' }}>● Alto (0-49)</span>
+                                <span style={{ color: '#ffa726' }}>● Médio (50-74)</span>
+                                <span style={{ color: '#4caf50' }}>● Baixo (75-100)</span>
+                            </div>
+                        </div>
 
-                {actionPlan.length > 0 ? (
-                    <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
-                        <thead style={{ borderBottom: '2px solid #ddd' }}>
-                            <tr style={{ textAlign: 'left' }}>
-                                <th style={{ padding: '0.5rem' }}>Setor</th>
-                                <th style={{ padding: '0.5rem' }}>Colaborador</th>
-                                <th style={{ padding: '0.5rem' }}>Categoria</th>
-                                <th style={{ padding: '0.5rem' }}>Item (ID)</th>
-                                <th style={{ padding: '0.5rem' }}>Prioridade</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {actionPlan.map((action, idx) => (
-                                <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
-                                    <td style={{ padding: '0.5rem' }}>{action.sector}</td>
-                                    <td style={{ padding: '0.5rem' }}>{action.personName}</td>
-                                    <td style={{ padding: '0.5rem' }}>{action.category}</td>
-                                    <td style={{ padding: '0.5rem' }}>{action.question || `Item #${action.itemIndex + 1}`}</td>
-                                    <td style={{ padding: '0.5rem', fontWeight: 'bold', color: '#d32f2f' }}>ALTA</td>
-                                </tr>
-                            ))}
-                        </tbody>
-                    </table>
-                ) : (
-                    <div style={{ padding: '1rem', background: '#e8f5e9', color: '#2e7d32', borderRadius: '4px' }}>
-                        Nenhuma não-conformidade crítica encontrada no grupo selecionado.
+                        {/* AEP Gauge */}
+                        <div className="card">
+                            <h3>Conformidade Ergonômica Média</h3>
+                            <div style={{ height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column' }}>
+                                <PieChart width={200} height={200}>
+                                    <Pie
+                                        data={gaugeData}
+                                        cx="50%"
+                                        cy="50%"
+                                        innerRadius={60}
+                                        outerRadius={80}
+                                        startAngle={180}
+                                        endAngle={0}
+                                        dataKey="value"
+                                    >
+                                        <Cell key="score" fill={gaugeColor} />
+                                        <Cell key="empty" fill="#eeeeee" />
+                                    </Pie>
+                                </PieChart>
+                                <h1 style={{ marginTop: '-100px', color: gaugeColor }}>{aepGlobalAvg}%</h1>
+                                <p style={{ marginTop: '20px', fontWeight: 600 }}>Índice Global AEP</p>
+                            </div>
+                        </div>
+
+                        {/* AEP Domain Breakdown */}
+                        <div className="card" style={{ gridColumn: 'span 2' }}>
+                            <h3>Conformidade por Domínio (AEP)</h3>
+                            <div style={{ height: '300px', width: '100%', marginTop: '1rem' }}>
+                                {aepDomainData.length > 0 ? (
+                                    <ResponsiveContainer width="100%" height="100%">
+                                        <BarChart
+                                            data={aepDomainData} layout="vertical"
+                                            margin={{ top: 5, right: 30, left: 150, bottom: 5 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                            <XAxis type="number" domain={[0, 100]} />
+                                            <YAxis type="category" dataKey="dominio" width={140} style={{ fontSize: '11px' }} />
+                                            <Tooltip />
+                                            <Bar dataKey="valor" radius={[0, 4, 4, 0]}>
+                                                {aepDomainData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.valor > 80 ? '#27AE60' : entry.valor > 60 ? '#F39C12' : '#E74C3C'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
+                                    </ResponsiveContainer>
+                                ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados de detalhamento.</p>}
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* 2. Action Plan Tab */}
+                {activeTab === 'action-plan' && (
+                    <div className="card" style={{ borderLeft: '6px solid #e53935' }}>
+                        <h3 style={{ color: '#d32f2f' }}>Itens Críticos para Correção (AEP)</h3>
+                        <p style={{ marginBottom: '1.5rem', fontSize: '0.9rem', color: '#666' }}>
+                            Itens respondidos como "Não" que requerem ação imediata.
+                        </p>
+                        {actionPlan.length > 0 ? (
+                            <div style={{ overflowX: 'auto' }}>
+                                <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.9rem' }}>
+                                    <thead style={{ background: '#f8f9fa' }}>
+                                        <tr style={{ textAlign: 'left' }}>
+                                            <th style={{ padding: '1rem', borderBottom: '2px solid #eee' }}>Setor</th>
+                                            <th style={{ padding: '1rem', borderBottom: '2px solid #eee' }}>Colaborador</th>
+                                            <th style={{ padding: '1rem', borderBottom: '2px solid #eee' }}>Categoria</th>
+                                            <th style={{ padding: '1rem', borderBottom: '2px solid #eee' }}>Item / Não Conformidade</th>
+                                            <th style={{ padding: '1rem', borderBottom: '2px solid #eee' }}>Prioridade</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {actionPlan.map((action, idx) => (
+                                            <tr key={idx} style={{ borderBottom: '1px solid #eee' }}>
+                                                <td style={{ padding: '1rem' }}>{action.sector}</td>
+                                                <td style={{ padding: '1rem', fontWeight: 600 }}>{action.personName}</td>
+                                                <td style={{ padding: '1rem' }}>{action.category}</td>
+                                                <td style={{ padding: '1rem', color: '#334155' }}>
+                                                    {action.question || `Item #${action.itemIndex + 1}`}
+                                                </td>
+                                                <td style={{ padding: '1rem', fontWeight: 'bold', color: '#d32f2f' }}>ALTA</td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        ) : (
+                            <div style={{ padding: '2rem', background: '#e8f5e9', color: '#2e7d32', borderRadius: '8px', textAlign: 'center' }}>
+                                ✅ Nenhuma não-conformidade crítica encontrada.
+                            </div>
+                        )}
+                    </div>
+                )}
+
+                {/* 3. History Tab */}
+                {activeTab === 'history' && (
+                    <div className="card" style={{ borderLeft: '6px solid #2e7d32' }}>
+                        <h3 style={{ color: '#2e7d32', marginBottom: '1.5rem' }}>Lista de Avaliações (Filtros Atuais)</h3>
+                        {filteredData.length > 0 ? (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                                {filteredData.map((ev, idx) => (
+                                    <div key={idx} style={{
+                                        padding: '1rem', border: '1px solid #eee', borderRadius: '8px',
+                                        display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#fff'
+                                    }}>
+                                        <div>
+                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <strong style={{ fontSize: '1rem' }}>{ev.person?.name || ev.person?.nome || 'N/A'}</strong>
+                                                <span style={{
+                                                    fontSize: '0.7rem', padding: '0.2rem 0.6rem', borderRadius: '10px',
+                                                    background: ev.type === 'AEP' ? '#dcfce7' : '#dbeafe',
+                                                    color: ev.type === 'AEP' ? '#166534' : '#1e40af', fontWeight: 600
+                                                }}>{ev.type}</span>
+                                            </div>
+                                            <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
+                                                {ev.person?.sector} | {ev.person?.role}
+                                            </div>
+                                        </div>
+                                        <div style={{ textAlign: 'right' }}>
+                                            <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                                {new Date(ev.timestamp || ev.person?.date).toLocaleDateString('pt-BR')}
+                                            </div>
+                                            <div style={{ fontSize: '1.1rem', fontWeight: 'bold', color: ev.type === 'AEP' ? (ev.scores?.score > 80 ? '#22c55e' : ev.scores?.score > 60 ? '#f59e0b' : '#ef4444') : '#334155' }}>
+                                                {ev.type === 'AEP' ? `${ev.scores?.score}%` : 'Concluído'}
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        ) : <p style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>Nenhuma avaliação encontrada.</p>}
                     </div>
                 )}
             </div>
-
         </div>
     );
 }
