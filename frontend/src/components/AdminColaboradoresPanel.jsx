@@ -180,7 +180,7 @@ export default function AdminColaboradoresPanel() {
                 email,
                 password: senha,
                 options: {
-                    data: { nome_completo: nome, tipo_acesso: 'colaborador' }
+                    data: { nome_completo: nome, tipo_acesso: 'admin' }
                 }
             });
 
@@ -192,7 +192,7 @@ export default function AdminColaboradoresPanel() {
                 .from('perfis')
                 .update({
                     nome_completo: nome,
-                    tipo_acesso: 'colaborador',
+                    tipo_acesso: 'admin',
                     empresa_id: profile?.empresa_id || null,
                     ativo: true
                 })
