@@ -19,6 +19,7 @@ export default function AepForm({ onFinish, onCancel }) {
     const [sectionImages, setSectionImages] = useState({}); // { categoryId: [base64, ...] }
     const [error, setError] = useState(null);
     const [step, setStep] = useState(0); // 0: ID, 1: Selection, 2: Form
+    const [isCalculating, setIsCalculating] = useState(false);
 
     const fileInputRefs = useRef({});
 
@@ -212,7 +213,7 @@ export default function AepForm({ onFinish, onCancel }) {
         });
     };
 
-    const handleCalculate = () => {
+    const handleCalculate = async () => {
         let missing = 0;
         currentData.categories.forEach(cat => {
             const catResps = responses[cat.id] || [];
@@ -227,29 +228,72 @@ export default function AepForm({ onFinish, onCancel }) {
             return;
         }
         setError(null);
+        setIsCalculating(true);
 
-        const scores = calculateAepScore(responses, formType);
+        try {
+            // Small artificial delay for visual feedback
+            await new Promise(resolve => setTimeout(resolve, 1500));
 
-        if (onFinish) {
-            onFinish({
-                scores: scores,
-                raw: responses,
-                images: sectionImages,
-                formType: formType,
-                person: {
-                    name: personData.name || 'Anônimo',
-                    sector: personData.sector,
-                    role: personData.role,
-                    company_name: personData.company,
-                    company_id: personData.companyId,
-                    date: new Date().toISOString()
-                }
-            });
+            const scores = calculateAepScore(responses, formType);
+
+            if (onFinish) {
+                await onFinish({
+                    scores: scores,
+                    raw: responses,
+                    images: sectionImages,
+                    formType: formType,
+                    person: {
+                        name: personData.name || 'Anônimo',
+                        sector: personData.sector,
+                        role: personData.role,
+                        company_name: personData.company,
+                        company_id: personData.companyId,
+                        date: new Date().toISOString()
+                    }
+                });
+            }
+        } catch (err) {
+            console.error(err);
+            setError("Erro ao processar resultados.");
+            setIsCalculating(false);
         }
     };
 
     return (
-        <div>
+        <div style={{ position: 'relative' }}>
+            {isCalculating && (
+                <div style={{
+                    position: 'fixed',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    bottom: 0,
+                    background: 'rgba(255,255,255,0.9)',
+                    zIndex: 9999,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    backdropFilter: 'blur(4px)'
+                }}>
+                    <div className="loading-spinner" style={{
+                        width: '50px',
+                        height: '50px',
+                        border: '5px solid #f3f3f3',
+                        borderTop: '5px solid #1b4d3e',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                    <h3 style={{ marginTop: '1.5rem', color: '#1b4d3e' }}>Processando Resultados...</h3>
+                    <p style={{ color: '#666' }}>Estamos calculando as métricas ergonômicas.</p>
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
+            )}
             {/* Header */}
             <div className="card" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', position: 'sticky', top: 0, zIndex: 100 }}>
                 <div>

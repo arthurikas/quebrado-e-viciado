@@ -9,6 +9,9 @@ export const filterData = (dataList, filters) => {
     if (!dataList || dataList.length === 0) return [];
 
     return dataList.filter(item => {
+        // Filter by Type (AEP vs COPSOQ)
+        if (filters.type && item.type !== filters.type) return false;
+
         // Filter by Sector (if selected)
         if (filters.sectorId) {
             // For COPSOQ evaluations, we just saved 'sector' as text, but for system coherence we might try to match names

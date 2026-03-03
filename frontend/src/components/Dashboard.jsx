@@ -10,6 +10,7 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
 
     // Local Filter State
     const [filters, setFilters] = useState({
+        assessmentType: '', // '', 'COPSOQ', 'AEP'
         sectorId: '',
         roleId: '',
         gender: '',
@@ -22,6 +23,7 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
     const filteredData = useMemo(() => {
         if (!evaluationsList || evaluationsList.length === 0) return [];
         return filterData(evaluationsList, {
+            type: filters.assessmentType || null,
             sectorId: filters.sectorId || null,
             roleId: filters.roleId || null,
             gender: filters.gender || null,
@@ -105,6 +107,19 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                             {companies.map(c => (
                                 <option key={c.id} value={c.id}>{c.nome || c.name}</option>
                             ))}
+                        </select>
+                    </div>
+                    <div>
+                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Tipo de Avaliação</label>
+                        <select
+                            className="form-input"
+                            value={filters.assessmentType}
+                            onChange={e => setFilters({ ...filters, assessmentType: e.target.value })}
+                            style={{ width: '100%', border: '2px solid #2e7d32' }}
+                        >
+                            <option value="">Todos os Tipos</option>
+                            <option value="COPSOQ">COPSOQ (Psicossocial)</option>
+                            <option value="AEP">AEP (Ergonômica)</option>
                         </select>
                     </div>
                     <div>

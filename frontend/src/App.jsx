@@ -336,6 +336,9 @@ function AppContent() {
 
       setEvaluations(prev => [newEval, ...prev]);
 
+      // Small additional delay to ensure DB writing is perceived as part of calculation
+      await new Promise(resolve => setTimeout(resolve, 500));
+
       logAction('Avaliação Realizada', `AEP ${data.formType} finalizado para ${data.person.name}`, user?.email || 'Visitante', data.person.company_id || activeCompanyId, data.person.company_name || activeCompany?.nome);
 
       setCurrentResult(newEval);
@@ -476,16 +479,40 @@ function AppContent() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                   {dashboardData.map(ev => (
-                    <div key={ev.id} style={{ padding: '1rem', border: '1px solid #eee', borderRadius: '4px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div key={ev.id} style={{
+                      padding: '1.25rem',
+                      border: '1px solid #eee',
+                      borderRadius: '8px',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      background: 'white',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)'
+                    }}>
                       <div onClick={() => {
-                        setCurrentResult(ev);
-                        setCurrentView('copsoq_result');
+                        setCurrentResult(null); // Reset first to avoid flash of old data
+                        setTimeout(() => {
+                          setCurrentResult(ev);
+                          setCurrentView('copsoq_result');
+                        }, 50);
                       }} style={{ cursor: 'pointer', flex: 1 }}>
-                        <strong>{ev.person.name}</strong> - {ev.type || 'N/A'}
-                        <div style={{ fontSize: '0.8rem', color: '#666' }}>
-                          {new Date(ev.person.date || Date.now()).toLocaleDateString()}
-                          {ev.person.evaluator && ` | Avaliador: ${ev.person.evaluator}`}
-                          {ev.person.role && ` | ${ev.person.role}`}
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.4rem' }}>
+                          <span style={{
+                            background: ev.type === 'AEP' ? '#e8f5e9' : '#e3f2fd',
+                            color: ev.type === 'AEP' ? '#2e7d32' : '#1976d2',
+                            padding: '0.2rem 0.6rem',
+                            borderRadius: '4px',
+                            fontSize: '0.7rem',
+                            fontWeight: 'bold'
+                          }}>
+                            {ev.type === 'AEP' ? 'AEP ERGONÔMICA' : 'COPSOQ PSICOSSOCIAL'}
+                          </span>
+                          <strong style={{ fontSize: '1rem', color: '#333' }}>{ev.person.name}</strong>
+                        </div>
+                        <div style={{ fontSize: '0.85rem', color: '#666', display: 'flex', gap: '1rem' }}>
+                          <span>📅 {new Date(ev.person.date || Date.now()).toLocaleDateString()}</span>
+                          {ev.person.sector && <span>📁 {ev.person.sector}</span>}
+                          {ev.person.role && <span>👤 {ev.person.role}</span>}
                         </div>
                       </div>
                       <div style={{ display: 'flex', gap: '0.5rem' }}>
