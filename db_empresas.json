@@ -1,0 +1,14 @@
+﻿[
+    {
+        "id":  "1623285f-3448-4579-8588-f4e22c890558",
+        "nome":  "normalizze teste 1",
+        "cnpj":  "00.000.000/0001-00",
+        "ativo":  true
+    },
+    {
+        "id":  "c0c79a76-3be8-4d3c-b665-1fbdc139427b",
+        "nome":  "Normalizze teste",
+        "cnpj":  "00.000.000/0000-01",
+        "ativo":  true
+    }
+]

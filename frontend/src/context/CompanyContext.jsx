@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../config/supabaseClient';
+import { supabase, supabaseReader } from '../config/supabaseClient';
 import { useAuth } from './AuthContext';
 
 const CompanyContext = createContext();
@@ -23,7 +23,7 @@ export const CompanyProvider = ({ children }) => {
         const fetchCompanies = async () => {
             try {
                 console.log('Fetching companies (Auth:', isAuthenticated, ')');
-                const { data, error } = await supabase
+                const { data, error } = await supabaseReader
                     .from('empresas')
                     .select('*')
                     .eq('ativo', true)

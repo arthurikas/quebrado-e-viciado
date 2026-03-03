@@ -1,15 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { createClient } from '@supabase/supabase-js';
-import { supabase } from '../config/supabaseClient';
+import { supabase, supabaseReader } from '../config/supabaseClient';
 
 const AuthContext = createContext();
-
-// Separate client for profile reads — always uses anon role (bypasses authenticated RLS)
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-const profileReader = (supabaseUrl && supabaseAnonKey)
-    ? createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false, autoRefreshToken: false } })
-    : null;
 
 export const useAuth = () => {
     const context = useContext(AuthContext);
@@ -62,18 +54,15 @@ export const AuthProvider = ({ children }) => {
         };
     }, []);
 
-    // Uses the separate anon-only client to bypass authenticated RLS restrictions
     const fetchProfile = async (userId) => {
-        if (!profileReader) return null;
-
-        const { data, error } = await profileReader
+        const { data, error } = await supabaseReader
             .from('perfis')
             .select('*')
             .eq('id', userId)
             .maybeSingle();
 
         if (error) {
-            console.error('fetchProfile error:', error.code, error.message);
+            console.error('fetchProfile error:', error.message);
             return null;
         }
         return data;

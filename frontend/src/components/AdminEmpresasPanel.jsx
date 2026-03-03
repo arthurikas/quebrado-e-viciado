@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase } from '../config/supabaseClient';
+import { supabase, supabaseReader } from '../config/supabaseClient';
 import { Building2, Edit2, Save, X, Plus, Users, CheckCircle, XCircle } from 'lucide-react';
 
 export default function AdminEmpresasPanel({ onBack }) {
@@ -16,7 +16,7 @@ export default function AdminEmpresasPanel({ onBack }) {
 
     const loadEmpresas = async () => {
         try {
-            const { data, error } = await supabase
+            const { data, error } = await supabaseReader
                 .from('empresas')
                 .select(`
                     *,

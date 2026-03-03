@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase } from '../config/supabaseClient';
+import { supabase, supabaseReader } from '../config/supabaseClient';
 
 const AuditContext = createContext();
 
@@ -12,7 +12,7 @@ export const AuditProvider = ({ children }) => {
     const fetchLogs = async () => {
         try {
             setLoading(true);
-            const { data, error } = await supabase
+            const { data, error } = await supabaseReader
                 .from('audit_logs')
                 .select('*')
                 .order('timestamp', { ascending: false })

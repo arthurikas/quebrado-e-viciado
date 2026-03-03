@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { AEP_DATA } from '../utils/aep_data_v2';
 import { calculateAepScore } from '../utils/aep_calculations_v2';
 import { useCompany } from '../context/CompanyContext';
-import { supabase } from '../config/supabaseClient';
+import { supabase, supabaseReader } from '../config/supabaseClient';
 import { Camera, X, ImageIcon } from 'lucide-react';
 
 export default function AepForm({ onFinish, onCancel }) {
@@ -40,7 +40,7 @@ export default function AepForm({ onFinish, onCancel }) {
             setCompanyData(companies[0]);
         } else {
             console.log('Fetching fallback company...');
-            supabase
+            supabaseReader
                 .from('empresas')
                 .select('*')
                 .eq('ativo', true)
@@ -100,7 +100,7 @@ export default function AepForm({ onFinish, onCancel }) {
                             // Silent Fallback: If no company is set, fetch 'Normalizze' or first available
                             if (!currentCompanyId) {
                                 try {
-                                    let { data } = await supabase
+                                    let { data } = await supabaseReader
                                         .from('empresas')
                                         .select('*')
                                         .ilike('nome', '%Normalizze%')
@@ -108,7 +108,7 @@ export default function AepForm({ onFinish, onCancel }) {
                                         .maybeSingle();
 
                                     if (!data) {
-                                        const { data: anyComp } = await supabase.from('empresas').select('*').limit(1).maybeSingle();
+                                        const { data: anyComp } = await supabaseReader.from('empresas').select('*').limit(1).maybeSingle();
                                         data = anyComp;
                                     }
 
