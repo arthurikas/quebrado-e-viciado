@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from 'react';
 import { supabase, supabaseReader } from '../config/supabaseClient';
 import { generateTemporaryPassword } from '../utils/passwordGenerator';
 import { useAuth } from '../context/AuthContext';
-import { Users, Plus, Edit2, Key, CheckCircle, XCircle, Copy, UserCog } from 'lucide-react';
+import { Users, Plus, Edit2, Key, CheckCircle, XCircle, Copy, UserCog, Trash2 } from 'lucide-react';
 
 const StatusMessage = ({ message }) => (
     <div style={{
@@ -15,7 +15,7 @@ const StatusMessage = ({ message }) => (
     </div>
 );
 
-const ListView = ({ operadores, onEdit, onReset, onToggle }) => (
+const ListView = ({ operadores, onEdit, onReset, onToggle, onDelete }) => (
     <div key="view-list">
         <div style={{ marginBottom: '1.5rem' }}>
             <span style={{ fontSize: '0.9rem', color: '#666' }}>
@@ -53,6 +53,25 @@ const ListView = ({ operadores, onEdit, onReset, onToggle }) => (
                                 <button className="btn-secondary" onClick={() => onEdit(op)} style={{ padding: '0.5rem 1rem', fontSize: '0.85rem' }}><Edit2 size={14} /> <span>Editar</span></button>
                                 <button onClick={() => onReset(op)} style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: '#fff3cd', color: '#856404', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}><Key size={14} /> <span>Resetar</span></button>
                                 <button onClick={() => onToggle(op)} style={{ padding: '0.5rem 1rem', borderRadius: '6px', border: 'none', background: op.ativo ? '#f8d7da' : '#d4edda', color: op.ativo ? '#721c24' : '#155724', cursor: 'pointer', fontSize: '0.85rem', fontWeight: 600 }}><span>{op.ativo ? 'Desativar' : 'Ativar'}</span></button>
+                                <button
+                                    onClick={() => onDelete(op)}
+                                    style={{
+                                        padding: '0.5rem 1rem',
+                                        borderRadius: '6px',
+                                        border: 'none',
+                                        background: '#fee2e2',
+                                        color: '#b91c1c',
+                                        cursor: 'pointer',
+                                        fontSize: '0.85rem',
+                                        fontWeight: 600,
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '0.3rem'
+                                    }}
+                                    title="Excluir Permanentemente"
+                                >
+                                    <Trash2 size={14} /> <span>Excluir</span>
+                                </button>
                             </div>
                         </div>
                     </div>
@@ -274,6 +293,28 @@ export default function AdminColaboradoresPanel() {
         }
     };
 
+    const handleDeleteOperador = async (op) => {
+        if (!window.confirm(`TEM CERTEZA QUE DESEJA EXCLUIR PERMANENTEMENTE o acesso de ${op.nome_completo}? Esta ação não pode ser desfeita.`)) return;
+
+        setLoading(true);
+        try {
+            const { error } = await supabase
+                .from('perfis')
+                .delete()
+                .eq('id', op.id);
+
+            if (error) throw error;
+
+            await loadData(true);
+            setMessage({ type: 'success', text: 'Acesso excluído permanentemente!' });
+        } catch (error) {
+            console.error('Erro ao excluir:', error);
+            setMessage({ type: 'error', text: 'Falha ao excluir o acesso: ' + (error.message || 'Erro de permissão.') });
+        } finally {
+            setLoading(false);
+        }
+    };
+
     const copyToClipboard = (text) => {
         navigator.clipboard.writeText(text);
         setMessage({ type: 'success', text: 'Senha copiada!' });
@@ -314,6 +355,7 @@ export default function AdminColaboradoresPanel() {
                         onEdit={(op) => { setEditingId(op.id); setEditForm({ nome_completo: op.nome_completo }); setViewMode('edit'); }}
                         onReset={handleResetPassword}
                         onToggle={handleToggleAtivo}
+                        onDelete={handleDeleteOperador}
                     />
                 )}
                 {viewMode === 'new' && (
