@@ -5,34 +5,60 @@ import { AEP_CATEGORIES } from '../utils/questions';
 import { filterData, aggregateCopsoq, aggregateAep, generateAepActionPlan } from '../utils/analytics';
 import { useCompany } from '../context/CompanyContext';
 
+const EMPTY_FILTERS = {
+    assessmentType: '',
+    sector: '',
+    role: '',
+    gender: '',
+    minTenureYears: '',
+    startDate: '',
+    endDate: ''
+};
+
 export default function Dashboard({ evaluationsList = [], onBack }) {
-    const { companies = [], activeCompanyId, setActiveCompanyId, activeSectors = [], activeRoles = [] } = useCompany();
+    const { companies = [], activeCompanyId, setActiveCompanyId } = useCompany();
     const [activeTab, setActiveTab] = useState('charts'); // 'charts', 'action-plan', 'history'
 
-    // Local Filter State
-    const [filters, setFilters] = useState({
-        assessmentType: '', // '', 'COPSOQ', 'AEP'
-        sectorId: '',
-        roleId: '',
-        gender: '',
-        minTenureYears: '',
-        startDate: '',
-        endDate: ''
-    });
+    // Pending filters (edited by user but not yet applied)
+    const [pendingFilters, setPendingFilters] = useState(EMPTY_FILTERS);
 
-    // 1. Filter Data
+    // Applied filters (what actually drives the data)
+    const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
+
+    // Derive unique sectors and roles from evaluationsList
+    const availableSectors = useMemo(() => {
+        if (!evaluationsList || evaluationsList.length === 0) return [];
+        const set = new Set();
+        evaluationsList.forEach(ev => {
+            const s = ev.person?.sector;
+            if (s && s.trim()) set.add(s.trim());
+        });
+        return Array.from(set).sort();
+    }, [evaluationsList]);
+
+    const availableRoles = useMemo(() => {
+        if (!evaluationsList || evaluationsList.length === 0) return [];
+        const set = new Set();
+        evaluationsList.forEach(ev => {
+            const r = ev.person?.role;
+            if (r && r.trim()) set.add(r.trim());
+        });
+        return Array.from(set).sort();
+    }, [evaluationsList]);
+
+    // 1. Filter Data using APPLIED filters
     const filteredData = useMemo(() => {
         if (!evaluationsList || evaluationsList.length === 0) return [];
         return filterData(evaluationsList, {
-            type: filters.assessmentType || null,
-            sectorId: filters.sectorId || null,
-            roleId: filters.roleId || null,
-            gender: filters.gender || null,
-            minTenureYears: filters.minTenureYears ? parseInt(filters.minTenureYears) : null,
-            startDate: filters.startDate,
-            endDate: filters.endDate
+            type: appliedFilters.assessmentType || null,
+            sectorId: appliedFilters.sector || null,
+            roleId: appliedFilters.role || null,
+            gender: appliedFilters.gender || null,
+            minTenureYears: appliedFilters.minTenureYears ? parseInt(appliedFilters.minTenureYears) : null,
+            startDate: appliedFilters.startDate,
+            endDate: appliedFilters.endDate
         });
-    }, [evaluationsList, filters]);
+    }, [evaluationsList, appliedFilters]);
 
     // 2. Aggregate COPSOQ for Radar
     const copsoqAggregated = useMemo(() => aggregateCopsoq(filteredData), [filteredData]);
@@ -51,7 +77,7 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
         fullMark: 100
     })) : [];
 
-    // 3. AEP Action Plan
+    // 4. AEP Action Plan
     const actionPlan = useMemo(() => generateAepActionPlan(filteredData), [filteredData]);
 
     // Calculate Global AEP for Gauge
@@ -59,11 +85,7 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
         if (filteredData.length === 0) return 0;
         const aepItems = filteredData.filter(i => i.type === 'AEP');
         if (aepItems.length === 0) return 0;
-
-        const sum = aepItems.reduce((acc, curr) => {
-            const val = curr.scores?.score;
-            return acc + (val || 0);
-        }, 0);
+        const sum = aepItems.reduce((acc, curr) => acc + (curr.scores?.score || 0), 0);
         return parseFloat((sum / aepItems.length).toFixed(2));
     }, [filteredData]);
 
@@ -73,17 +95,30 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
     ];
     const gaugeColor = aepGlobalAvg > 80 ? '#4caf50' : aepGlobalAvg > 50 ? '#ffa726' : '#e53935';
 
-    const handlePrint = () => {
-        window.print();
+    const handleApplyFilters = () => {
+        setAppliedFilters({ ...pendingFilters });
     };
+
+    const handleClearFilters = () => {
+        setPendingFilters(EMPTY_FILTERS);
+        setAppliedFilters(EMPTY_FILTERS);
+    };
+
+    const hasActiveFilters = Object.values(appliedFilters).some(v => v !== '');
+
+    const handlePrint = () => window.print();
+
+    const fieldStyle = { width: '100%', border: '1.5px solid #a5d6a7', borderRadius: 6, padding: '0.45rem 0.6rem', fontSize: '0.85rem', background: '#fff', color: '#333', outline: 'none' };
+    const labelStyle = { fontSize: '0.75rem', fontWeight: 600, color: '#2e7d32', marginBottom: '0.3rem', display: 'block' };
 
     return (
         <div className="dashboard-container">
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
                 <div>
-                    <h2>Dashboard BI & Analítico</h2>
+                    <h2>Dashboard BI &amp; Analítico</h2>
                     <p style={{ fontSize: '0.9rem', color: '#666' }}>
-                        Exibindo médias de {filteredData.length} avaliações filtradas.
+                        Exibindo médias de <strong>{filteredData.length}</strong> avaliações
+                        {hasActiveFilters && <span style={{ color: '#2e7d32', marginLeft: 6 }}>· filtros ativos</span>}
                     </p>
                 </div>
                 <div style={{ display: 'flex', gap: '1rem' }}>
@@ -92,17 +127,28 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                 </div>
             </div>
 
-            {/* Filter Bar */}
-            <div className="card" style={{ marginBottom: '1.5rem', background: '#e8f5e9', border: '1px solid #c8e6c9' }}>
-                <h4 style={{ margin: '0 0 1rem 0', color: '#2e7d32' }}>Filtros de Análise (BI)</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem' }}>
+            {/* ── Filter Bar ── */}
+            <div className="card" style={{ marginBottom: '1.5rem', background: '#e8f5e9', border: '1px solid #c8e6c9', padding: '1.25rem 1.5rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+                    <h4 style={{ margin: 0, color: '#1b5e20', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                        🔍 Filtros de Análise (BI)
+                    </h4>
+                    {hasActiveFilters && (
+                        <span style={{ fontSize: '0.78rem', background: '#2e7d32', color: '#fff', padding: '0.2rem 0.7rem', borderRadius: 20 }}>
+                            Filtros aplicados
+                        </span>
+                    )}
+                </div>
+
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '0.9rem' }}>
+
+                    {/* Empresa */}
                     <div>
-                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Empresa (Contexto Geral)</label>
+                        <label style={labelStyle}>Empresa</label>
                         <select
-                            className="form-input"
-                            value={activeCompanyId}
+                            style={fieldStyle}
+                            value={activeCompanyId || ''}
                             onChange={e => setActiveCompanyId(e.target.value)}
-                            style={{ width: '100%', border: '2px solid #2e7d32' }}
                         >
                             <option value="">Todas as Empresas</option>
                             {companies.map(c => (
@@ -110,74 +156,145 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                             ))}
                         </select>
                     </div>
+
+                    {/* Tipo de Avaliação */}
                     <div>
-                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Tipo de Avaliação</label>
+                        <label style={labelStyle}>Tipo de Avaliação</label>
                         <select
-                            className="form-input"
-                            value={filters.assessmentType}
-                            onChange={e => setFilters({ ...filters, assessmentType: e.target.value })}
-                            style={{ width: '100%', border: '2px solid #2e7d32' }}
+                            style={fieldStyle}
+                            value={pendingFilters.assessmentType}
+                            onChange={e => setPendingFilters({ ...pendingFilters, assessmentType: e.target.value })}
                         >
                             <option value="">Todos os Tipos</option>
                             <option value="COPSOQ">COPSOQ (Psicossocial)</option>
                             <option value="AEP">AEP (Ergonômica)</option>
                         </select>
                     </div>
+
+                    {/* Setor */}
                     <div>
-                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Setor (Pesquisar)</label>
-                        <input
-                            type="text"
-                            className="form-input"
-                            placeholder="Digite o setor..."
-                            value={filters.sectorId}
-                            onChange={e => setFilters({ ...filters, sectorId: e.target.value })}
-                            style={{ width: '100%' }}
-                        />
-                    </div>
-                    <div>
-                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Cargo</label>
-                        <select className="form-input" value={filters.roleId} onChange={e => setFilters({ ...filters, roleId: e.target.value })}>
-                            <option value="">Todos os Cargos</option>
-                            {activeRoles.map(r => <option key={r.id} value={r.id}>{r.name || r.nome}</option>)}
+                        <label style={labelStyle}>Setor</label>
+                        <select
+                            style={fieldStyle}
+                            value={pendingFilters.sector}
+                            onChange={e => setPendingFilters({ ...pendingFilters, sector: e.target.value })}
+                        >
+                            <option value="">Todos os Setores</option>
+                            {availableSectors.map(s => (
+                                <option key={s} value={s}>{s}</option>
+                            ))}
                         </select>
                     </div>
+
+                    {/* Cargo */}
                     <div>
-                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Gênero</label>
-                        <select className="form-input" value={filters.gender} onChange={e => setFilters({ ...filters, gender: e.target.value })}>
+                        <label style={labelStyle}>Cargo</label>
+                        <select
+                            style={fieldStyle}
+                            value={pendingFilters.role}
+                            onChange={e => setPendingFilters({ ...pendingFilters, role: e.target.value })}
+                        >
+                            <option value="">Todos os Cargos</option>
+                            {availableRoles.map(r => (
+                                <option key={r} value={r}>{r}</option>
+                            ))}
+                        </select>
+                    </div>
+
+                    {/* Gênero */}
+                    <div>
+                        <label style={labelStyle}>Gênero</label>
+                        <select
+                            style={fieldStyle}
+                            value={pendingFilters.gender}
+                            onChange={e => setPendingFilters({ ...pendingFilters, gender: e.target.value })}
+                        >
                             <option value="">Todos</option>
                             <option value="M">Masculino</option>
                             <option value="F">Feminino</option>
+                            <option value="O">Outro</option>
                         </select>
                     </div>
+
+                    {/* Tempo de Casa */}
                     <div>
-                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Tempo de Casa (Anos +)</label>
-                        <select className="form-input" value={filters.minTenureYears} onChange={e => setFilters({ ...filters, minTenureYears: e.target.value })}>
+                        <label style={labelStyle}>Tempo de Casa (mín.)</label>
+                        <select
+                            style={fieldStyle}
+                            value={pendingFilters.minTenureYears}
+                            onChange={e => setPendingFilters({ ...pendingFilters, minTenureYears: e.target.value })}
+                        >
                             <option value="">Qualquer</option>
-                            <option value="1">Mais de 1 ano</option>
-                            <option value="2">Mais de 2 anos</option>
-                            <option value="5">Mais de 5 anos</option>
+                            <option value="0.5">+ 6 meses</option>
+                            <option value="1">+ 1 ano</option>
+                            <option value="2">+ 2 anos</option>
+                            <option value="5">+ 5 anos</option>
+                            <option value="10">+ 10 anos</option>
                         </select>
                     </div>
+
+                    {/* Data Início */}
                     <div>
-                        <label className="form-label" style={{ fontSize: '0.8rem' }}>De (Data Início)</label>
+                        <label style={labelStyle}>De (Data Início)</label>
                         <input
                             type="date"
-                            className="form-input"
-                            value={filters.startDate}
-                            onChange={e => setFilters({ ...filters, startDate: e.target.value })}
-                            style={{ width: '100%' }}
+                            style={fieldStyle}
+                            value={pendingFilters.startDate}
+                            onChange={e => setPendingFilters({ ...pendingFilters, startDate: e.target.value })}
                         />
                     </div>
+
+                    {/* Data Fim */}
                     <div>
-                        <label className="form-label" style={{ fontSize: '0.8rem' }}>Até (Data Fim)</label>
+                        <label style={labelStyle}>Até (Data Fim)</label>
                         <input
                             type="date"
-                            className="form-input"
-                            value={filters.endDate}
-                            onChange={e => setFilters({ ...filters, endDate: e.target.value })}
-                            style={{ width: '100%' }}
+                            style={fieldStyle}
+                            value={pendingFilters.endDate}
+                            onChange={e => setPendingFilters({ ...pendingFilters, endDate: e.target.value })}
                         />
                     </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', gap: '0.75rem', marginTop: '1.25rem', justifyContent: 'flex-end' }}>
+                    <button
+                        onClick={handleClearFilters}
+                        style={{
+                            padding: '0.5rem 1.2rem',
+                            border: '1.5px solid #b0bec5',
+                            borderRadius: 6,
+                            background: '#fff',
+                            color: '#546e7a',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#f5f5f5'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#fff'}
+                    >
+                        ✕ Limpar Filtros
+                    </button>
+                    <button
+                        onClick={handleApplyFilters}
+                        style={{
+                            padding: '0.5rem 1.5rem',
+                            border: 'none',
+                            borderRadius: 6,
+                            background: '#1b5e20',
+                            color: '#fff',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            fontSize: '0.85rem',
+                            boxShadow: '0 2px 8px rgba(27,94,32,0.25)',
+                            transition: 'all 0.2s'
+                        }}
+                        onMouseEnter={e => e.currentTarget.style.background = '#2e7d32'}
+                        onMouseLeave={e => e.currentTarget.style.background = '#1b5e20'}
+                    >
+                        ✔ Aplicar Filtros
+                    </button>
                 </div>
             </div>
 
@@ -220,7 +337,7 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                 {/* 1. Charts Tab */}
                 {activeTab === 'charts' && (
                     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.5rem' }}>
-                        {/* Radar PROART */}
+                        {/* Radar COPSOQ */}
                         <div className="card">
                             <h3>Média Psicossocial (COPSOQ II)</h3>
                             <div style={{ height: '300px', width: '100%' }}>
@@ -234,10 +351,10 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                                             <Tooltip />
                                         </RadarChart>
                                     </ResponsiveContainer>
-                                ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados.</p>}
+                                ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados COPSOQ para os filtros selecionados.</p>}
                             </div>
                             <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
-                                <span style={{ color: '#e53935' }}>● Alto (0-49)</span>
+                                <span style={{ color: '#e53935' }}>● Alto Risco (0-49)</span>
                                 <span style={{ color: '#ffa726' }}>● Médio (50-74)</span>
                                 <span style={{ color: '#4caf50' }}>● Baixo (75-100)</span>
                             </div>
@@ -250,12 +367,9 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                                 <PieChart width={200} height={200}>
                                     <Pie
                                         data={gaugeData}
-                                        cx="50%"
-                                        cy="50%"
-                                        innerRadius={60}
-                                        outerRadius={80}
-                                        startAngle={180}
-                                        endAngle={0}
+                                        cx="50%" cy="50%"
+                                        innerRadius={60} outerRadius={80}
+                                        startAngle={180} endAngle={0}
                                         dataKey="value"
                                     >
                                         <Cell key="score" fill={gaugeColor} />
@@ -288,7 +402,7 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                                             </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
-                                ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados de detalhamento.</p>}
+                                ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados AEP para os filtros selecionados.</p>}
                             </div>
                         </div>
                     </div>
@@ -357,7 +471,9 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                                                 }}>{ev.type}</span>
                                             </div>
                                             <div style={{ fontSize: '0.85rem', color: '#64748b', marginTop: '0.25rem' }}>
-                                                {ev.person?.sector} | {ev.person?.role}
+                                                {ev.person?.sector && <span>{ev.person.sector}</span>}
+                                                {ev.person?.sector && ev.person?.role && <span> | </span>}
+                                                {ev.person?.role && <span>{ev.person.role}</span>}
                                             </div>
                                         </div>
                                         <div style={{ textAlign: 'right' }}>
@@ -371,7 +487,7 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                                     </div>
                                 ))}
                             </div>
-                        ) : <p style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>Nenhuma avaliação encontrada.</p>}
+                        ) : <p style={{ textAlign: 'center', padding: '2rem', color: '#888' }}>Nenhuma avaliação encontrada com os filtros aplicados.</p>}
                     </div>
                 )}
             </div>
