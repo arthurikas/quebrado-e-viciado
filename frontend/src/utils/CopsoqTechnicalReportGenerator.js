@@ -13,20 +13,19 @@ export function generateCopsoqHtmlReport(results, personData) {
         { id: 'demandas_cognitivas', label: 'Demandas Cognitivas' },
         { id: 'demandas_emocionais', label: 'Demandas Emocionais' },
         { id: 'influencia_trabalho', label: 'Influência no Trabalho' },
-        { id: 'possibilidades_desenvolvimento', label: 'Possibilidades de Desenvolvimento' },
-        { id: 'previsibilidade', label: 'Previsibilidade' },
-        { id: 'clareza_papel', label: 'Transparência do Papel' },
-        { id: 'reconhecimento', label: 'Recompensas' },
+        { id: 'clareza_papel', label: 'Clareza de Papel' },
         { id: 'conflitos_papel', label: 'Conflitos de Papel' },
-        { id: 'qualidade_lideranca', label: 'Qualidade da Liderança' },
-        { id: 'apoio_colegas', label: 'Suporte Social de Colegas' },
-        { id: 'apoio_chefia', label: 'Suporte Social de Superiores' },
-        { id: 'compromisso_local', label: 'Comunidade Social no Trabalho' },
+        { id: 'previsibilidade', label: 'Previsibilidade' },
+        { id: 'reconhecimento_recompensa', label: 'Reconhecimento e Recompensa' },
+        { id: 'apoio_chefia', label: 'Apoio Social - Chefia' },
+        { id: 'apoio_colegas', label: 'Apoio Social - Colegas' },
+        { id: 'feedback_trabalho', label: 'Feedback sobre o Trabalho' },
+        { id: 'justica_organizacional', label: 'Justiça Organizacional' },
+        { id: 'comprometimento_local', label: 'Comprometimento com o local de Trabalho' },
         { id: 'inseguranca_trabalho', label: 'Insegurança no Trabalho' },
-        { id: 'satisfacao_trabalho', label: 'Satisfação no Trabalho' },
         { id: 'conflito_trabalho_familia', label: 'Conflito Trabalho-Família' },
-        { id: 'saude_geral', label: 'Saúde Geral' },
-        { id: 'burnout', label: 'Sintomas Depressivos' }
+        { id: 'saude_bem_estar', label: 'Saúde e Bem-Estar' },
+        { id: 'presenteismo', label: 'Presenteísmo' }
     ];
 
     const tableRowsHtml = reportDomains.map(domain => {
@@ -230,7 +229,7 @@ export function generateCopsoqHtmlReport(results, personData) {
             <h1>Relatório Técnico de Riscos Psicossociais com Base na Metodologia COPSOQ II</h1>
             <div class="meta-info">
                 Empresa: ${personData.company_name || personData.company || 'Não identificada'} | 
-                Avaliador: ${personData.evaluator || 'Responsável Técnico'} | 
+                Avaliador: ${personData.evaluator || 'Não informado'} | 
                 Data: ${new Date(personData.date || Date.now()).toLocaleDateString('pt-BR')}
             </div>
         </header>
@@ -243,7 +242,7 @@ export function generateCopsoqHtmlReport(results, personData) {
             </p>
             <h3>1.2 Metodologia das Ferramentas Utilizadas</h3>
             <p>
-                Este relatório foi elaborado sob a orientação técnica da <b>Engenheira de Segurança do Trabalho Tatiana Coaracy</b>. A metodologia aplicada baseia-se nos pilares da <b>NR-1, ISO 45003 e nas premissas técnicas do COPSOQ II</b>. O instrumento utilizado consiste em 62 questões que cobrem diversos domínios da vida laboral, utilizando a versão brasileira adaptada por <b>Melo & Ferreira (2014)</b>.
+                Este relatório foi elaborado com base em métodos amplamente validados para avaliação de riscos. A metodologia aplicada baseia-se nos pilares da <b>NR-1, ISO 45003 e nas premissas técnicas do COPSOQ II</b>. O instrumento utilizado consiste em 62 questões que cobrem diversos domínios da vida laboral, utilizando a versão brasileira adaptada por <b>Melo & Ferreira (2014)</b>.
             </p>
         </section>
 
@@ -280,7 +279,7 @@ export function generateCopsoqHtmlReport(results, personData) {
 
             <h3>4.2 RESPONSÁVEL TÉCNICO PELA AVALIAÇÃO</h3>
             <div class="data-grid">
-                <div class="data-item"><b>Nome:</b> <span>${personData.evaluator || 'Eng. Tatiana Coaracy'}</span></div>
+                <div class="data-item"><b>Nome:</b> <span>${personData.evaluator || 'Não informado'}</span></div>
                 <div class="data-item"><b>Registro Profissional:</b> <span>CREA/MTE: ---</span></div>
                 <div class="data-item"><b>Especialidade:</b> <span>Engenharia de Segurança do Trabalho/Saúde Ocupacional</span></div>
                 <div class="data-item"><b>Contato:</b> <span>contato@normalizze.com.br</span></div>
@@ -351,7 +350,7 @@ export function generateCopsoqHtmlReport(results, personData) {
         <div style="margin-top: 60px; text-align: center;">
             <div class="signature">
                 Linha para Assinatura<br>
-                <b>${personData.evaluator || 'Eng. Tatiana Coaracy'}</b><br>
+                <b>${personData.evaluator || ''}</b><br>
                 Responsável Técnico<br>
                 Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}
             </div>

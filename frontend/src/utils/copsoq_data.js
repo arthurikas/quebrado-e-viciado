@@ -116,7 +116,7 @@ export const COPSOQ_DOMAINS = {
     "demandas_cognitivas": {
         nome: "Demandas Cognitivas",
         perguntas: [7, 8, 9, 10],
-        tipo: "mistas" // 7,8 negativas; 9,10 positivas
+        tipo: "mistas"
     },
     "demandas_emocionais": {
         nome: "Demandas Emocionais",
@@ -126,16 +126,6 @@ export const COPSOQ_DOMAINS = {
     "influencia_trabalho": {
         nome: "Influência no Trabalho",
         perguntas: [14, 15, 16],
-        tipo: "positivas"
-    },
-    "possibilidades_desenvolvimento": {
-        nome: "Possibilidades de Desenvolvimento",
-        perguntas: [17, 18, 19],
-        tipo: "positivas"
-    },
-    "significado_trabalho": {
-        nome: "Significado do Trabalho",
-        perguntas: [20, 21, 22],
         tipo: "positivas"
     },
     "clareza_papel": {
@@ -153,8 +143,8 @@ export const COPSOQ_DOMAINS = {
         perguntas: [29, 30, 31],
         tipo: "positivas"
     },
-    "reconhecimento": {
-        nome: "Reconhecimento",
+    "reconhecimento_recompensa": {
+        nome: "Reconhecimento e Recompensa",
         perguntas: [32, 33, 34],
         tipo: "positivas"
     },
@@ -168,23 +158,18 @@ export const COPSOQ_DOMAINS = {
         perguntas: [38, 39, 40],
         tipo: "positivas"
     },
-    "feedback": {
-        nome: "Feedback",
+    "feedback_trabalho": {
+        nome: "Feedback sobre o Trabalho",
         perguntas: [41, 42, 43],
         tipo: "positivas"
     },
-    "qualidade_lideranca": {
-        nome: "Qualidade da Liderança",
-        perguntas: [44, 45, 46],
-        tipo: "positivas"
-    },
-    "justica_respeito": {
-        nome: "Justiça e Respeito",
+    "justica_organizacional": {
+        nome: "Justiça Organizacional",
         perguntas: [47, 48, 49],
         tipo: "positivas"
     },
-    "compromisso_local": {
-        nome: "Compromisso com o Local de Trabalho",
+    "comprometimento_local": {
+        nome: "Comprometimento com o local de Trabalho",
         perguntas: [50, 51, 52],
         tipo: "positivas"
     },
@@ -198,10 +183,10 @@ export const COPSOQ_DOMAINS = {
         perguntas: [56, 57, 58],
         tipo: "negativas"
     },
-    "burnout": {
-        nome: "Burnout",
+    "saude_bem_estar": {
+        nome: "Saúde e Bem-Estar",
         perguntas: [59, 60, 61],
-        tipo: "mistas" // 59,61 negativas; 60 positiva
+        tipo: "mistas"
     },
     "presenteismo": {
         nome: "Presenteísmo",
