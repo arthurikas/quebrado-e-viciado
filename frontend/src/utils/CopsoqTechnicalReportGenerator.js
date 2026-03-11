@@ -229,7 +229,7 @@ export function generateCopsoqHtmlReport(results, personData) {
             <h1>Relatório Técnico de Riscos Psicossociais com Base na Metodologia COPSOQ II</h1>
             <div class="meta-info">
                 Empresa: ${personData.company_name || personData.company || 'Não identificada'} | 
-                Avaliador: ${personData.evaluator || 'Não informado'} | 
+                Avaliador: ____________________________________ | 
                 Data: ${new Date(personData.date || Date.now()).toLocaleDateString('pt-BR')}
             </div>
         </header>
@@ -279,7 +279,7 @@ export function generateCopsoqHtmlReport(results, personData) {
 
             <h3>4.2 RESPONSÁVEL TÉCNICO PELA AVALIAÇÃO</h3>
             <div class="data-grid">
-                <div class="data-item"><b>Nome:</b> <span>${personData.evaluator || 'Não informado'}</span></div>
+                <div class="data-item"><b>Nome:</b> <span>_______________________________________________</span></div>
                 <div class="data-item"><b>Registro Profissional:</b> <span>CREA/MTE: ---</span></div>
                 <div class="data-item"><b>Especialidade:</b> <span>Engenharia de Segurança do Trabalho/Saúde Ocupacional</span></div>
                 <div class="data-item"><b>Contato:</b> <span>contato@normalizze.com.br</span></div>
@@ -349,8 +349,8 @@ export function generateCopsoqHtmlReport(results, personData) {
 
         <div style="margin-top: 60px; text-align: center;">
             <div class="signature">
-                Linha para Assinatura<br>
-                <b>${personData.evaluator || ''}</b><br>
+                ______________________________________________________<br>
+                <b>Assinatura do Avaliador</b><br>
                 Responsável Técnico<br>
                 Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}
             </div>
