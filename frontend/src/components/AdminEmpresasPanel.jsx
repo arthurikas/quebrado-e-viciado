@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase, supabaseReader } from '../config/supabaseClient';
-import { Building2, Edit2, Save, X, Plus, Users, CheckCircle, XCircle } from 'lucide-react';
+import { Building2, Edit2, Save, X, Plus, Users, CheckCircle, XCircle, Copy } from 'lucide-react';
 
 export default function AdminEmpresasPanel({ onBack }) {
     const [empresas, setEmpresas] = useState([]);
@@ -74,13 +74,17 @@ export default function AdminEmpresasPanel({ onBack }) {
             return;
         }
 
+        // Generate a short 6-character alphanumeric hash
+        const generateHash = () => Math.random().toString(36).substring(2, 8).toUpperCase();
+
         try {
             const { data, error } = await supabase
                 .from('empresas')
                 .insert([{
                     nome: newEmpresa.nome,
                     cnpj: newEmpresa.cnpj,
-                    ativo: true
+                    ativo: true,
+                    hash_link: generateHash()
                 }])
                 .select();
 
@@ -348,6 +352,24 @@ export default function AdminEmpresasPanel({ onBack }) {
                                                 <Users size={14} />
                                                 {empresa.perfis?.[0]?.count || 0} colaborador(es)
                                             </div>
+                                            {empresa.hash_link && (
+                                                <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f0f4f8', padding: '0.5rem', borderRadius: '4px' }}>
+                                                    <strong style={{ color: '#1b4d3e' }}>Link Único:</strong> 
+                                                    <a href={`${window.location.origin}/?url=${empresa.hash_link}`} target="_blank" rel="noopener noreferrer" style={{ color: '#3498DB', textDecoration: 'none' }}>
+                                                        {window.location.origin}/?url={empresa.hash_link}
+                                                    </a>
+                                                    <button 
+                                                        onClick={() => {
+                                                            navigator.clipboard.writeText(`${window.location.origin}/?url=${empresa.hash_link}`);
+                                                            showMessage('success', 'Link copiado para a área de transferência!');
+                                                        }}
+                                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#666', display: 'flex', alignItems: 'center' }}
+                                                        title="Copiar Link"
+                                                    >
+                                                        <Copy size={14} />
+                                                    </button>
+                                                </div>
+                                            )}
                                         </div>
                                         <div style={{ display: 'flex', gap: '0.5rem' }}>
                                             <button

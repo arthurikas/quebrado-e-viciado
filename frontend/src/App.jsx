@@ -146,6 +146,15 @@ function AppContent() {
     fetchEvaluations();
   }, [fetchEvaluations]);
 
+  // Intercept unique url links for direct Copsoq access
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('url')) {
+      setGuestMode(true);
+      setCurrentView('copsoq');
+    }
+  }, []);
+
   // Redirect after login or logout
   useEffect(() => {
     if (isAuthenticated) {

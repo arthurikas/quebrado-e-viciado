@@ -3,6 +3,7 @@ import { COPSOQ_QUESTIONS, COPSOQ_DOMAINS } from '../utils/copsoq_data';
 import { calcularResultadosCopsoq } from '../utils/copsoq_calculations';
 import { useAuth } from '../context/AuthContext';
 import { useCompany } from '../context/CompanyContext';
+import { supabaseReader } from '../config/supabaseClient';
 import { Save, ChevronRight, ChevronLeft, Send, AlertCircle } from 'lucide-react';
 
 const CopsoqForm = ({ onFinish, onCancel }) => {
@@ -24,11 +25,45 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
     });
     const [error, setError] = useState(null);
     const { companies } = useCompany();
+    const [hasUniqueLink, setHasUniqueLink] = useState(false);
+    const [isLoadingCompany, setIsLoadingCompany] = useState(false);
 
     // Scroll to top on step change
     useEffect(() => {
         window.scrollTo(0, 0);
     }, [currentStep]);
+
+    // Check for unique link in URL
+    useEffect(() => {
+        const checkUniqueLink = async () => {
+            const params = new URLSearchParams(window.location.search);
+            const hash = params.get('url');
+            if (hash) {
+                setIsLoadingCompany(true);
+                try {
+                    const { data, error } = await supabaseReader
+                        .from('empresas')
+                        .select('id, nome, ativo')
+                        .eq('hash_link', hash)
+                        .single();
+                    
+                    if (data && data.ativo && !error) {
+                        setPersonData(prev => ({
+                            ...prev,
+                            company: data.nome,
+                            companyId: data.id
+                        }));
+                        setHasUniqueLink(true);
+                    }
+                } catch (e) {
+                    console.error("Erro ao validar link único:", e);
+                } finally {
+                    setIsLoadingCompany(false);
+                }
+            }
+        };
+        checkUniqueLink();
+    }, []);
 
     const handleOptionSelect = (questionId, value) => {
         setResponses(prev => ({
@@ -109,45 +144,54 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
 
                 <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
 
-                    {/* Empresa (Obrigatório) */}
-                    <div style={{ marginBottom: '1.25rem' }}>
-                        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>Empresa *</label>
-                        <select
-                            className="input-field"
-                            value={personData.companyId}
-                            onChange={e => {
-                                const id = e.target.value;
-                                const comp = companies.find(c => c.id.toString() === id);
-                                setPersonData({
-                                    ...personData,
-                                    companyId: id,
-                                    company: comp ? (comp.nome || comp.name) : ''
-                                });
-                            }}
-                            style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                        >
-                            <option value="">Selecione sua empresa...</option>
-                            {companies.map(c => (
-                                <option key={c.id} value={c.id}>{c.nome || c.name}</option>
-                            ))}
-                        </select>
-                        <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.25rem' }}>
-                            Caso sua empresa não esteja listada, procure o RH.
-                        </p>
-                    </div>
+                    {isLoadingCompany && (
+                        <div style={{ padding: '1rem', textAlign: 'center', color: '#666' }}>
+                            Validando link de acesso...
+                        </div>
+                    )}
+
+                    {!hasUniqueLink && !isLoadingCompany && (
+                        <div style={{ marginBottom: '1.25rem' }}>
+                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>Empresa *</label>
+                            <select
+                                className="input-field"
+                                value={personData.companyId}
+                                onChange={e => {
+                                    const id = e.target.value;
+                                    const comp = companies.find(c => c.id.toString() === id);
+                                    setPersonData({
+                                        ...personData,
+                                        companyId: id,
+                                        company: comp ? (comp.nome || comp.name) : ''
+                                    });
+                                }}
+                                style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                            >
+                                <option value="">Selecione sua empresa...</option>
+                                {companies.map(c => (
+                                    <option key={c.id} value={c.id}>{c.nome || c.name}</option>
+                                ))}
+                            </select>
+                            <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.25rem' }}>
+                                Caso sua empresa não esteja listada, procure o RH.
+                            </p>
+                        </div>
+                    )}
 
                     {/* Nome (Opcional) */}
-                    <div style={{ marginBottom: '1rem' }}>
-                        <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>Seu Nome (Opcional)</label>
-                        <input
-                            type="text"
-                            className="input-field"
-                            value={personData.name}
-                            onChange={e => setPersonData({ ...personData, name: e.target.value })}
-                            placeholder="Seu nome completo"
-                            style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
-                        />
-                    </div>
+                    {!hasUniqueLink && !isLoadingCompany && (
+                        <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>Seu Nome (Opcional)</label>
+                            <input
+                                type="text"
+                                className="input-field"
+                                value={personData.name}
+                                onChange={e => setPersonData({ ...personData, name: e.target.value })}
+                                placeholder="Seu nome completo"
+                                style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
+                            />
+                        </div>
+                    )}
 
                     {/* Setor e Cargo */}
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
@@ -238,10 +282,11 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                             setError(null);
                             setIsStarted(true);
                         }}
+                        disabled={isLoadingCompany}
                         className="btn-primary"
-                        style={{ padding: '0.75rem 2rem', background: '#3498DB', color: 'white', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                        style={{ padding: '0.75rem 2rem', background: isLoadingCompany ? '#ccc' : '#3498DB', color: 'white', border: 'none', borderRadius: '4px', cursor: isLoadingCompany ? 'not-allowed' : 'pointer' }}
                     >
-                        Iniciar Avaliação
+                        {isLoadingCompany ? 'Aguarde...' : 'Iniciar Avaliação'}
                     </button>
                 </div>
             </div>
