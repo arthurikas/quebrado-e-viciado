@@ -41,19 +41,29 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
             if (hash) {
                 setIsLoadingCompany(true);
                 try {
+                    console.log("Validating hash string:", hash);
                     const { data, error } = await supabaseReader
                         .from('empresas')
                         .select('id, nome, ativo')
                         .eq('hash_link', hash)
                         .single();
                     
-                    if (data && data.ativo && !error) {
+                    if (error) {
+                         console.error("Supabase error fetching hash:", error);
+                    }
+                    
+                    if (data && data.ativo) {
+                        console.log("Valid company found:", data.nome);
+                        // We must set it exactly as the others
                         setPersonData(prev => ({
                             ...prev,
                             company: data.nome,
-                            companyId: data.id
+                            companyId: data.id.toString() // ensure string to match the Select values if they ever check strictly
                         }));
                         setHasUniqueLink(true);
+                    } else if (data && !data.ativo) {
+                        console.warn("Company is inactive.");
+                        setError("O link desta empresa foi desativado.");
                     }
                 } catch (e) {
                     console.error("Erro ao validar link único:", e);
@@ -150,7 +160,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                         </div>
                     )}
 
-                    {!hasUniqueLink && !isLoadingCompany && (
+                    {!hasUniqueLink && !isLoadingCompany && !window.location.search.includes('url=') && (
                         <div style={{ marginBottom: '1.25rem' }}>
                             <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>Empresa *</label>
                             <select
@@ -179,7 +189,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                     )}
 
                     {/* Nome (Opcional) */}
-                    {!hasUniqueLink && !isLoadingCompany && (
+                    {!hasUniqueLink && !isLoadingCompany && !window.location.search.includes('url=') && (
                         <div style={{ marginBottom: '1rem' }}>
                             <label style={{ display: 'block', fontWeight: 'bold', marginBottom: '0.5rem' }}>Seu Nome (Opcional)</label>
                             <input
