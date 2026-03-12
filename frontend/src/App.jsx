@@ -146,18 +146,17 @@ function AppContent() {
     fetchEvaluations();
   }, [fetchEvaluations]);
 
-  // Intercept unique url links for direct Copsoq access
+  // Intercept unique url links for direct Copsoq access and handle redirect
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    if (params.get('url')) {
+    const hasHash = params.get('url');
+
+    if (hasHash) {
+      // Direct access via unique link
       setGuestMode(true);
       setCurrentView('copsoq');
-    }
-  }, []);
-
-  // Redirect after login or logout
-  useEffect(() => {
-    if (isAuthenticated) {
+    } else if (isAuthenticated) {
+      // Authenticated user routing
       setGuestMode(false);
       if (isAdmin()) {
         setCurrentView('admin_dashboard');
@@ -165,12 +164,12 @@ function AppContent() {
         setCurrentView('dashboard');
       }
     } else {
-      // If not authenticated and not in guest mode, ensure we are ready for login
+      // Not authenticated, not using a unique link > stay in dashboard (which defaults to login since not authenticated)
       if (!guestMode) {
-        setCurrentView('dashboard');
+          setCurrentView('dashboard');
       }
     }
-  }, [isAuthenticated, isAdmin, guestMode]);
+  }, [isAuthenticated, isAdmin, window.location.search, guestMode]);
 
   // Check for missing configuration
   const isConfigMissing = !import.meta.env.VITE_SUPABASE_URL || !import.meta.env.VITE_SUPABASE_ANON_KEY;
