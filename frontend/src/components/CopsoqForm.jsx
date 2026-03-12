@@ -149,7 +149,9 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                 <h2 style={{ color: '#1b4d3e', marginBottom: '1rem' }}>Avaliação baseada no COPSOQ II</h2>
                 <p style={{ color: '#7f8c8d', marginBottom: '2rem' }}>
                     Sua participação é fundamental para a melhoria do ambiente de trabalho.<br />
-                    Identifique sua empresa e preencha os dados básicos abaixo.
+                    {window.location.search.includes('url=') 
+                        ? 'Preencha os dados básicos abaixo.' 
+                        : 'Identifique sua empresa e preencha os dados básicos abaixo.'}
                 </p>
 
                 <div style={{ textAlign: 'left', marginBottom: '2rem' }}>
