@@ -4,6 +4,9 @@ import calculator from '../utils/calculations';
 import { AEP_CATEGORIES } from '../utils/questions';
 import { filterData, aggregateCopsoq, aggregateAep, generateAepActionPlan } from '../utils/analytics';
 import { useCompany } from '../context/CompanyContext';
+import { generateDashboardReport } from '../utils/DashboardReportGenerator';
+import { generateGeneralAnalyticalReport } from '../utils/DashboardGeneralReportGenerator';
+import { Loader2 } from 'lucide-react'; // For loading spinner
 
 const EMPTY_FILTERS = {
     assessmentType: '',
@@ -18,6 +21,7 @@ const EMPTY_FILTERS = {
 export default function Dashboard({ evaluationsList = [], onBack }) {
     const { companies = [], activeCompanyId, setActiveCompanyId } = useCompany();
     const [activeTab, setActiveTab] = useState('charts'); // 'charts', 'action-plan', 'history'
+    const [isGeneratingGeneralReport, setIsGeneratingGeneralReport] = useState(false);
 
     // Pending filters (edited by user but not yet applied)
     const [pendingFilters, setPendingFilters] = useState(EMPTY_FILTERS);
@@ -108,6 +112,31 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
 
     const handlePrint = () => window.print();
 
+    const handleExportDocx = async () => {
+        await generateDashboardReport({
+            filteredDataLength: filteredData.length,
+            appliedFilters,
+            copsoqAggregated,
+            aepGlobalAvg,
+            aepDomainData,
+            actionPlan
+        });
+    };
+
+    const handleExportGeneralReport = async () => {
+        if (isGeneratingGeneralReport) return;
+        setIsGeneratingGeneralReport(true);
+        try {
+            const activeCompany = companies.find(c => String(c.id) === String(activeCompanyId));
+            await generateGeneralAnalyticalReport(filteredData, activeCompany?.nome || activeCompany?.name || 'Geral');
+        } catch (error) {
+            console.error(error);
+            alert("Ocorreu um erro ao gerar o relatório geral.");
+        } finally {
+            setIsGeneratingGeneralReport(false);
+        }
+    };
+
     const fieldStyle = { width: '100%', border: '1.5px solid #a5d6a7', borderRadius: 6, padding: '0.45rem 0.6rem', fontSize: '0.85rem', background: '#fff', color: '#333', outline: 'none' };
     const labelStyle = { fontSize: '0.75rem', fontWeight: 600, color: '#2e7d32', marginBottom: '0.3rem', display: 'block' };
 
@@ -121,8 +150,18 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                         {hasActiveFilters && <span style={{ color: '#2e7d32', marginLeft: 6 }}>· filtros ativos</span>}
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem' }}>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
                     <button className="btn-primary" style={{ background: '#546e7a' }} onClick={onBack}>Voltar</button>
+                    <button 
+                        className="btn-primary" 
+                        onClick={handleExportGeneralReport} 
+                        style={{ background: '#7b1fa2', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isGeneratingGeneralReport ? 0.7 : 1, cursor: isGeneratingGeneralReport ? 'not-allowed' : 'pointer' }}
+                        disabled={isGeneratingGeneralReport}
+                    >
+                        {isGeneratingGeneralReport ? <Loader2 size={16} className="lucide-spin" /> : null}
+                        {isGeneratingGeneralReport ? 'Gerando...' : 'Relatório Geral'}
+                    </button>
+                    <button className="btn-primary" onClick={handleExportDocx} style={{ background: '#2196f3' }}>Exportar Individual</button>
                     <button className="btn-primary" onClick={handlePrint}>Exportar PDF</button>
                 </div>
             </div>
