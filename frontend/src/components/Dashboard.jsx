@@ -75,8 +75,44 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
     })) : [];
 
     // Transform for Radar Chart
+    const abbreviateDomain = (name) => {
+        const abbrMap = {
+            "Apoio Social - Chefia": "Ap. Social Chefia",
+            "Reconhecimento e Recompensa": "Reconhecimento",
+            "Conflito Trabalho-Família": "Conf. Trab-Família",
+            "Justiça Organizacional": "Justiça Org.",
+            "Comprometimento com o Local de Trabalho": "Comprometimento",
+            "Demandas Emocionais": "Dem. Emocionais",
+            "Demandas Cognitivas": "Dem. Cognitivas",
+            "Demandas Quantitativas": "Dem. Quantitativas",
+            "Feedback sobre o Trabalho": "Feedback",
+            "Possibilidades de Desenvolvimento": "Possib. Desenvolvimento",
+            "Qualidade da Liderança": "Qual. Liderança",
+            "Insegurança no Trabalho": "Insegurança",
+            "Sentido do Trabalho": "Sentido no Trab.",
+            "Apoio Social - Colegas de trabalho": "Ap. Social Colegas",
+            "Previsibilidade": "Previsibilidade",
+            "Clima de Segurança": "Clima Seg.",
+            "Satisfação no Trabalho": "Satisfação",
+            "Saúde Geral": "Saúde Geral",
+            "Dificuldades para dormir": "Dif. Dormir",
+            "Sintomas Depressivos": "Sint. Depressivos",
+            "Sintomas Somáticos de Estresse": "Sint. Estresse",
+            "Sintomas Cognitivos de Estresse": "Sint. Cog. Estresse",
+            "Exigências Emocionais": "Exig. Emocionais",
+            "Exigências Cognitivas": "Exig. Cognitivas",
+            "Influência no Trabalho": "Influência",
+            "Qualidade do Papel": "Qual. do Papel",
+            "Clareza de Papel": "Clareza de Papel",
+            "Conflito de Papel": "Conflito de Papel",
+            "Exigências de esconder emoções": "Esconder Emoções",
+            "Ritmo de Trabalho": "Ritmo Trab."
+        };
+        return abbrMap[name] || name;
+    };
+
     const radarData = copsoqAggregated ? Object.entries(copsoqAggregated).map(([key, value]) => ({
-        area: key,
+        area: abbreviateDomain(key),
         media: value,
         fullMark: 100
     })) : [];
@@ -123,7 +159,10 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
         });
     };
 
+    const isReportEnabled = appliedFilters.startDate && appliedFilters.endDate;
+
     const handleExportGeneralReport = async () => {
+        if (!isReportEnabled) return;
         if (isGeneratingGeneralReport) return;
         setIsGeneratingGeneralReport(true);
         try {
@@ -150,19 +189,32 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                         {hasActiveFilters && <span style={{ color: '#2e7d32', marginLeft: 6 }}>· filtros ativos</span>}
                     </p>
                 </div>
-                <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-                    <button className="btn-primary" style={{ background: '#546e7a' }} onClick={onBack}>Voltar</button>
-                    <button 
-                        className="btn-primary" 
-                        onClick={handleExportGeneralReport} 
-                        style={{ background: '#7b1fa2', display: 'flex', alignItems: 'center', gap: '0.5rem', opacity: isGeneratingGeneralReport ? 0.7 : 1, cursor: isGeneratingGeneralReport ? 'not-allowed' : 'pointer' }}
-                        disabled={isGeneratingGeneralReport}
-                    >
-                        {isGeneratingGeneralReport ? <Loader2 size={16} className="lucide-spin" /> : null}
-                        {isGeneratingGeneralReport ? 'Gerando...' : 'Relatório Geral'}
-                    </button>
-                    <button className="btn-primary" onClick={handleExportDocx} style={{ background: '#2196f3' }}>Exportar Individual</button>
-                    <button className="btn-primary" onClick={handlePrint}>Exportar PDF</button>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                    <button className="btn-primary" style={{ background: '#546e7a', height: 'fit-content' }} onClick={onBack}>Voltar</button>
+                    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.25rem' }}>
+                        <button 
+                            className="btn-primary" 
+                            onClick={handleExportGeneralReport} 
+                            style={{ 
+                                background: isReportEnabled ? '#7b1fa2' : '#9e9e9e', 
+                                display: 'flex', 
+                                alignItems: 'center', 
+                                gap: '0.5rem', 
+                                opacity: isGeneratingGeneralReport ? 0.7 : 1, 
+                                cursor: (!isReportEnabled || isGeneratingGeneralReport) ? 'not-allowed' : 'pointer',
+                                height: 'fit-content'
+                            }}
+                            disabled={!isReportEnabled || isGeneratingGeneralReport}
+                        >
+                            {isGeneratingGeneralReport ? <Loader2 size={16} className="lucide-spin" /> : null}
+                            {isGeneratingGeneralReport ? 'Gerando...' : 'Baixar Relatório Geral'}
+                        </button>
+                        {!isReportEnabled && (
+                            <span style={{ fontSize: '0.75rem', color: '#888', maxWidth: '180px', textAlign: 'center', lineHeight: '1.2' }}>
+                                Selecione um período para liberar o relatório
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
 
@@ -379,14 +431,30 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                         {/* Radar COPSOQ */}
                         <div className="card">
                             <h3>Média Psicossocial (COPSOQ II)</h3>
-                            <div style={{ height: '300px', width: '100%' }}>
+                            <div style={{ height: '420px', width: '100%', padding: '60px', boxSizing: 'border-box' }}>
                                 {radarData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
                                             <PolarGrid />
-                                            <PolarAngleAxis dataKey="area" />
-                                            <PolarRadiusAxis angle={30} domain={[0, 100]} tickCount={6} />
-                                            <Radar name="Média Grupo" dataKey="media" stroke="#2e7d32" fill="#2e7d32" fillOpacity={0.6} />
+                                            <PolarAngleAxis 
+                                                dataKey="area" 
+                                                tick={{ fontSize: 11, fontWeight: 500 }}
+                                                cx="50%"
+                                                cy="50%"
+                                            />
+                                            <PolarRadiusAxis 
+                                                angle={30} 
+                                                domain={[0, 100]} 
+                                                tickCount={6} 
+                                                tick={{ fontSize: 10 }}
+                                            />
+                                            <Radar 
+                                                name="Média Grupo" 
+                                                dataKey="media" 
+                                                stroke="#2e7d32" 
+                                                fill="#2e7d32" 
+                                                fillOpacity={0.6} 
+                                            />
                                             <Tooltip />
                                         </RadarChart>
                                     </ResponsiveContainer>
