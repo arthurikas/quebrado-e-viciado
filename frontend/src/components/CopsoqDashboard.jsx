@@ -6,11 +6,47 @@ import { generateCopsoqHtmlReport } from '../utils/CopsoqTechnicalReportGenerato
 const CopsoqDashboard = ({ results, person, onBack }) => {
     if (!results) return null;
 
+    const abbreviateDomain = (name) => {
+        const abbrMap = {
+            "Apoio Social - Chefia": "Ap. Social Chefia",
+            "Reconhecimento e Recompensa": "Reconhecimento",
+            "Conflito Trabalho-Família": "Conf. Trab-Família",
+            "Justiça Organizacional": "Justiça Org.",
+            "Comprometimento com o Local de Trabalho": "Comprometimento",
+            "Demandas Emocionais": "Dem. Emocionais",
+            "Demandas Cognitivas": "Dem. Cognitivas",
+            "Demandas Quantitativas": "Dem. Quantitativas",
+            "Feedback sobre o Trabalho": "Feedback",
+            "Possibilidades de Desenvolvimento": "Possib. Desenvolvimento",
+            "Qualidade da Liderança": "Qual. Liderança",
+            "Insegurança no Trabalho": "Insegurança",
+            "Sentido do Trabalho": "Sentido no Trab.",
+            "Apoio Social - Colegas de trabalho": "Ap. Social Colegas",
+            "Previsibilidade": "Previsibilidade",
+            "Clima de Segurança": "Clima Seg.",
+            "Satisfação no Trabalho": "Satisfação",
+            "Saúde Geral": "Saúde Geral",
+            "Dificuldades para dormir": "Dif. Dormir",
+            "Sintomas Depressivos": "Sint. Depressivos",
+            "Sintomas Somáticos de Estresse": "Sint. Estresse",
+            "Sintomas Cognitivos de Estresse": "Sint. Cog. Estresse",
+            "Exigências Emocionais": "Exig. Emocionais",
+            "Exigências Cognitivas": "Exig. Cognitivas",
+            "Influência no Trabalho": "Influência",
+            "Qualidade do Papel": "Qual. do Papel",
+            "Clareza de Papel": "Clareza de Papel",
+            "Conflito de Papel": "Conflito de Papel",
+            "Exigências de esconder emoções": "Esconder Emoções",
+            "Ritmo de Trabalho": "Ritmo Trab."
+        };
+        return abbrMap[name] || name;
+    };
+
     // Convert results object to array for charts
     const domainData = Object.entries(results).map(([key, data]) => ({
         id: key,
         name: data.nome,
-        shortName: data.nome.split(' ').slice(0, 2).join(' '), // Shorter name for charts
+        shortName: abbreviateDomain(data.nome),
         score: data.media,
         color: data.cor,
         classificacao: data.classificacao
@@ -65,13 +101,22 @@ const CopsoqDashboard = ({ results, person, onBack }) => {
                 {/* Radar Chart */}
                 <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <h3>Visão Geral (Radar)</h3>
-                    <div style={{ width: '100%', height: '400px' }}>
+                    <div style={{ width: '100%', height: '420px', padding: '60px', boxSizing: 'border-box' }}>
                         <ResponsiveContainer>
-                            <RadarChart cx="50%" cy="50%" outerRadius="80%" data={domainData}>
+                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={domainData}>
                                 <PolarGrid />
-                                <PolarAngleAxis dataKey="shortName" style={{ fontSize: '10px' }} />
-                                <PolarRadiusAxis angle={30} domain={[0, 125]} /> {/* Max 125 based on calculation */}
-                                <Radar name="Pontuação" dataKey="score" stroke="#3498DB" fill="#3498DB" fillOpacity={0.4} />
+                                <PolarAngleAxis 
+                                    dataKey="shortName" 
+                                    tick={{ fontSize: 11, fontWeight: 500 }} 
+                                />
+                                <PolarRadiusAxis angle={30} domain={[0, 125]} tick={{ fontSize: 10 }} />
+                                <Radar 
+                                    name="Pontuação" 
+                                    dataKey="score" 
+                                    stroke="#3498DB" 
+                                    fill="#3498DB" 
+                                    fillOpacity={0.4} 
+                                />
                                 <RechartsTooltip />
                             </RadarChart>
                         </ResponsiveContainer>

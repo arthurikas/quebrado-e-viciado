@@ -434,13 +434,11 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                             <div style={{ height: '420px', width: '100%', padding: '60px', boxSizing: 'border-box' }}>
                                 {radarData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <RadarChart cx="50%" cy="50%" outerRadius="80%" data={radarData}>
+                                        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
                                             <PolarGrid />
                                             <PolarAngleAxis 
                                                 dataKey="area" 
                                                 tick={{ fontSize: 11, fontWeight: 500 }}
-                                                cx="50%"
-                                                cy="50%"
                                             />
                                             <PolarRadiusAxis 
                                                 angle={30} 

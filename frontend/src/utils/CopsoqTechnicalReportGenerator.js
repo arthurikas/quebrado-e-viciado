@@ -114,10 +114,54 @@ export function generateCopsoqHtmlReport(results, personData) {
     }).join('');
 
     const date = new Date(personData.date || Date.now()).toLocaleDateString('pt-BR');
-    const company = personData.company_name || personData.company || 'Não identificada';
-    const sector  = personData.sector || 'Geral';
-    const cnpj    = personData.cnpj || '---';
-    const address = personData.address || '---';
+    const company = personData.company_name || pe    // Chart generation helper (Radar)
+    const abbreviateDomain = (name) => {
+        const abbrMap = {
+            "Apoio Social - Chefia": "Ap. Social Chefia",
+            "Reconhecimento e Recompensa": "Reconhecimento",
+            "Conflito Trabalho-Família": "Conf. Trab-Família",
+            "Justiça Organizacional": "Justiça Org.",
+            "Comprometimento com o Local de Trabalho": "Comprometimento",
+            "Demandas Emocionais": "Dem. Emocionais",
+            "Demandas Cognitivas": "Dem. Cognitivas",
+            "Demandas Quantitativas": "Dem. Quantitativas",
+            "Feedback sobre o Trabalho": "Feedback",
+            "Possibilidades de Desenvolvimento": "Possib. Desenvolvimento",
+            "Qualidade da Liderança": "Qual. Liderança",
+            "Insegurança no Trabalho": "Insegurança",
+            "Sentido do Trabalho": "Sentido no Trab.",
+            "Apoio Social - Colegas de trabalho": "Ap. Social Colegas",
+            "Previsibilidade": "Previsibilidade",
+            "Clima de Segurança": "Clima Seg.",
+            "Satisfação no Trabalho": "Satisfação",
+            "Saúde Geral": "Saúde Geral",
+            "Dificuldades para dormir": "Dif. Dormir",
+            "Sintomas Depressivos": "Sint. Depressivos",
+            "Sintomas Somáticos de Estresse": "Sint. Estresse",
+            "Sintomas Cognitivos de Estresse": "Sint. Cog. Estresse",
+            "Exigências Emocionais": "Exig. Emocionais",
+            "Exigências Cognitivas": "Exig. Cognitivas",
+            "Influência no Trabalho": "Influência",
+            "Qualidade do Papel": "Qual. do Papel",
+            "Clareza de Papel": "Clareza de Papel",
+            "Conflito de Papel": "Conflito de Papel",
+            "Exigências de esconder emoções": "Esconder Emoções",
+            "Ritmo de Trabalho": "Ritmo Trab."
+        };
+        return abbrMap[name] || name;
+    };
+
+    // We can't use Recharts easily here for static HTML export as image.
+    // We'll use a simple script that renders to a hidden canvas or just describe that it should be printed.
+    // Actually, for a technical report, a visual summary is great.
+    
+    // We'll add a placeholder and a script to render it on window load.
+    
+    const radarLabels = reportDomains.map(d => abbreviateDomain(d.label));
+    const radarScores = reportDomains.map(d => {
+        const data = scores[d.id] || { media: 0 };
+        return typeof data.media === 'number' ? data.media : 0;
+    });
 
     const htmlContent = `<!DOCTYPE html>
 <html lang="pt-BR">
@@ -125,6 +169,7 @@ export function generateCopsoqHtmlReport(results, personData) {
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Relatório Técnico COPSOQ II — ${company}</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
         * { box-sizing: border-box; }
         body {
@@ -241,6 +286,13 @@ export function generateCopsoqHtmlReport(results, personData) {
             margin: 14px 0;
             font-size: 11px;
         }
+        /* CHART CONTAINER */
+        .chart-container {
+            width: 100%;
+            max-width: 600px;
+            margin: 30px auto;
+            text-align: center;
+        }
         @media print {
             body { background: #fff; }
             .container { box-shadow: none; margin: 0; max-width: 100%; padding: 20px 30px; }
@@ -267,6 +319,100 @@ export function generateCopsoqHtmlReport(results, personData) {
             <div class="field"><b>Data da Avaliação:</b> ${date}</div>
             <div class="field"><b>Avaliador:</b> Tatiana Coaracy</div>
             <div class="field"><b>Setor:</b> ${sector}</div>
+        </div>
+    </div>
+
+    <!-- SEÇÃO I -->
+    <section>
+        <h2>Seção I — Introdução à Avaliação Psicossocial com o COPSOQ II</h2>
+        ...
+    </section>
+
+    <!-- NEW: RESUMO GRÁFICO SEÇÃO -->
+    <section>
+        <h2>Seção II — Resumo Gráfico dos Resultados</h2>
+        <p>Abaixo apresentamos a consolidação visual dos índices psicossociais. O gráfico radar permite identificar o equilíbrio entre as diferentes dimensões, onde a área preenchida mais próxima das bordas indica menores riscos.</p>
+        <div class="chart-container">
+            <canvas id="radarChart"></canvas>
+        </div>
+    </section>
+
+    <!-- SEÇÃO II (Now III) -->
+    <section>
+        <h2>Seção III — Objetivo e Estrutura do Relatório Técnico</h2>
+        ...
+    </section>
+
+    <!-- ... rest of sections ... -->
+    <section>
+        <h2>Seção V — Resultados por Domínio Psicossocial</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Domínio</th>
+                    <th style="text-align:center;">Índice Médio</th>
+                    <th style="text-align:center;">Nível de Risco</th>
+                    <th>Observações Principais</th>
+                </tr>
+            </thead>
+            <tbody>
+                ${tableRowsHtml}
+            </tbody>
+        </table>
+    </section>
+
+    <!-- ... rest of sections ... -->
+
+    <script>
+        window.onload = function() {
+            const ctx = document.getElementById('radarChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: ${JSON.stringify(radarLabels)},
+                    datasets: [{
+                        label: 'Índice do Colaborador',
+                        data: ${JSON.stringify(radarScores)},
+                        backgroundColor: 'rgba(27, 77, 62, 0.4)',
+                        borderColor: '#1b4d3e',
+                        borderWidth: 2,
+                        pointBackgroundColor: '#1b4d3e'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: true,
+                    scales: {
+                        r: {
+                            min: 0,
+                            max: 100,
+                            beginAtZero: true,
+                            ticks: { stepSize: 20, display: false },
+                            pointLabels: {
+                                font: { size: 10 },
+                                padding: 20
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: { display: false }
+                    }
+                }
+            });
+        };
+    </script>
+
+    <!-- PRINT BUTTON -->
+    <div class="no-print" style="margin-top:40px;text-align:center;">
+        <button onclick="window.print()" style="padding:10px 28px;cursor:pointer;background:#1b4d3e;color:#fff;border:none;border-radius:6px;font-size:13px;font-weight:600;">
+            🖨️ Imprimir / Salvar como PDF
+        </button>
+    </div>
+
+</div>
+</body>
+</html>`;
+ass="field"><b>Setor:</b> ${sector}</div>
         </div>
     </div>
 
