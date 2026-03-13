@@ -6,6 +6,7 @@ import { filterData, aggregateCopsoq, aggregateAep, generateAepActionPlan } from
 import { useCompany } from '../context/CompanyContext';
 import { generateDashboardReport } from '../utils/DashboardReportGenerator';
 import { generateGeneralAnalyticalReport } from '../utils/DashboardGeneralReportGenerator';
+import { generateConsolidatedTechnicalReport } from '../utils/DashboardTechnicalReportGenerator';
 import { Loader2 } from 'lucide-react'; // For loading spinner
 
 const EMPTY_FILTERS = {
@@ -167,7 +168,8 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
         setIsGeneratingGeneralReport(true);
         try {
             const activeCompany = companies.find(c => String(c.id) === String(activeCompanyId));
-            await generateGeneralAnalyticalReport(filteredData, activeCompany?.nome || activeCompany?.name || 'Geral');
+            const periodText = `${appliedFilters.startDate} até ${appliedFilters.endDate}`;
+            await generateConsolidatedTechnicalReport(filteredData, activeCompany?.nome || activeCompany?.name || 'Geral', periodText);
         } catch (error) {
             console.error(error);
             alert("Ocorreu um erro ao gerar o relatório geral.");
@@ -431,10 +433,10 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                         {/* Radar COPSOQ */}
                         <div className="card">
                             <h3>Média Psicossocial (COPSOQ II)</h3>
-                            <div style={{ height: '420px', width: '100%', padding: '60px', boxSizing: 'border-box' }}>
+                            <div style={{ height: '420px', width: '100%', padding: '80px', boxSizing: 'border-box' }}>
                                 {radarData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <RadarChart cx="50%" cy="50%" outerRadius="70%" data={radarData}>
+                                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
                                             <PolarGrid />
                                             <PolarAngleAxis 
                                                 dataKey="area" 
