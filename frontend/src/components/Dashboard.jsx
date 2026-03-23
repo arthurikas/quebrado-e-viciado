@@ -6,7 +6,6 @@ import { filterData, aggregateCopsoq, aggregateAep, generateAepActionPlan } from
 import { useCompany } from '../context/CompanyContext';
 import { generateDashboardReport } from '../utils/DashboardReportGenerator';
 import { generateGeneralAnalyticalReport } from '../utils/DashboardGeneralReportGenerator';
-import { generateConsolidatedTechnicalReport } from '../utils/DashboardTechnicalReportGenerator';
 import { Loader2 } from 'lucide-react'; // For loading spinner
 
 const EMPTY_FILTERS = {
@@ -168,8 +167,8 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
         setIsGeneratingGeneralReport(true);
         try {
             const activeCompany = companies.find(c => String(c.id) === String(activeCompanyId));
-            const periodText = `${appliedFilters.startDate} até ${appliedFilters.endDate}`;
-            await generateConsolidatedTechnicalReport(filteredData, activeCompany?.nome || activeCompany?.name || 'Geral', periodText);
+            const companyName = activeCompany?.nome || activeCompany?.name || 'Geral';
+            await generateGeneralAnalyticalReport(filteredData, companyName);
         } catch (error) {
             console.error(error);
             alert("Ocorreu um erro ao gerar o relatório geral.");
