@@ -101,24 +101,19 @@ const CopsoqDashboard = ({ results, person, onBack }) => {
                 {/* Radar Chart */}
                 <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <h3>Visão Geral (Radar)</h3>
-                    <div style={{ width: '100%', height: '420px', padding: '60px', boxSizing: 'border-box' }}>
+                    <div style={{ width: '100%', height: '500px', marginTop: '1rem' }}>
                         <ResponsiveContainer>
-                            <RadarChart cx="50%" cy="50%" outerRadius="70%" data={domainData}>
-                                <PolarGrid />
-                                <PolarAngleAxis 
-                                    dataKey="shortName" 
-                                    tick={{ fontSize: 11, fontWeight: 500 }} 
-                                />
-                                <PolarRadiusAxis angle={30} domain={[0, 125]} tick={{ fontSize: 10 }} />
-                                <Radar 
-                                    name="Pontuação" 
-                                    dataKey="score" 
-                                    stroke="#3498DB" 
-                                    fill="#3498DB" 
-                                    fillOpacity={0.4} 
-                                />
-                                <RechartsTooltip />
-                            </RadarChart>
+                            <BarChart data={domainData} layout="vertical" margin={{ top: 5, right: 30, left: 160, bottom: 5 }}>
+                                <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                <XAxis type="number" domain={[0, 100]} />
+                                <YAxis type="category" dataKey="shortName" width={150} style={{ fontSize: '11px' }} />
+                                <RechartsTooltip formatter={(value) => [`${value.toFixed(1)}`, 'Pontuação']} />
+                                <Bar dataKey="score" radius={[0, 4, 4, 0]}>
+                                    {domainData.map((entry, index) => (
+                                        <Cell key={`cell-${index}`} fill={entry.color} />
+                                    ))}
+                                </Bar>
+                            </BarChart>
                         </ResponsiveContainer>
                     </div>
                 </div>

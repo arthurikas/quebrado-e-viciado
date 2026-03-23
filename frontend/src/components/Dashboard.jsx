@@ -432,30 +432,23 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                         {/* Radar COPSOQ */}
                         <div className="card">
                             <h3>Média Psicossocial (COPSOQ II)</h3>
-                            <div style={{ height: '420px', width: '100%', padding: '80px', boxSizing: 'border-box' }}>
+                            <div style={{ height: '500px', width: '100%', marginTop: '1rem' }}>
                                 {radarData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
-                                        <RadarChart cx="50%" cy="50%" outerRadius="65%" data={radarData}>
-                                            <PolarGrid />
-                                            <PolarAngleAxis 
-                                                dataKey="area" 
-                                                tick={{ fontSize: 11, fontWeight: 500 }}
-                                            />
-                                            <PolarRadiusAxis 
-                                                angle={30} 
-                                                domain={[0, 100]} 
-                                                tickCount={6} 
-                                                tick={{ fontSize: 10 }}
-                                            />
-                                            <Radar 
-                                                name="Média Grupo" 
-                                                dataKey="media" 
-                                                stroke="#2e7d32" 
-                                                fill="#2e7d32" 
-                                                fillOpacity={0.6} 
-                                            />
-                                            <Tooltip />
-                                        </RadarChart>
+                                        <BarChart
+                                            data={radarData} layout="vertical"
+                                            margin={{ top: 5, right: 30, left: 160, bottom: 5 }}
+                                        >
+                                            <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
+                                            <XAxis type="number" domain={[0, 100]} />
+                                            <YAxis type="category" dataKey="area" width={150} style={{ fontSize: '11px' }} />
+                                            <Tooltip formatter={(value) => [`${value}`, 'Pontuação']} />
+                                            <Bar dataKey="media" radius={[0, 4, 4, 0]}>
+                                                {radarData.map((entry, index) => (
+                                                    <Cell key={`cell-${index}`} fill={entry.media >= 75 ? '#4caf50' : entry.media >= 50 ? '#ffa726' : '#e53935'} />
+                                                ))}
+                                            </Bar>
+                                        </BarChart>
                                     </ResponsiveContainer>
                                 ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados COPSOQ para os filtros selecionados.</p>}
                             </div>

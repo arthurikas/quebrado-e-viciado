@@ -167,74 +167,59 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
         return;
     }
 
-    // Agrupar por setor
-    const sectorsMap = {};
-    copsoqEvals.forEach(ev => {
-        const sector = (ev.person?.sector || 'Sem Setor cadastrado').trim();
-        if (!sectorsMap[sector]) sectorsMap[sector] = [];
-        sectorsMap[sector].push(ev);
-    });
+    const totalRespondents = copsoqEvals.length;
+    const allDomains = [];
 
-    const processedSectors = [];
+    // Processar todas as avaliações juntas
+    for (const dom of DOMAIN_MAP) {
+        const questions = [];
 
-    for (const [sectorName, evals] of Object.entries(sectorsMap)) {
-        const totalRespondents = evals.length;
-        const sectorDomains = [];
+        for (const qId of dom.qs) {
+            const qDef = COPSOQ_QUESTIONS.find(q => q.id === qId);
+            const qText = qDef ? qDef.text : `Pergunta ${qId}`;
 
-        for (const dom of DOMAIN_MAP) {
-            const questions = [];
+            const counts = [0, 0, 0, 0, 0];
+            let respondentsForQ = 0;
 
-            for (const qId of dom.qs) {
-                const qDef = COPSOQ_QUESTIONS.find(q => q.id === qId);
-                const qText = qDef ? qDef.text : `Pergunta ${qId}`;
-
-                const counts = [0, 0, 0, 0, 0];
-                let respondentsForQ = 0;
-
-                evals.forEach(ev => {
-                    const resp = ev.responses[qId];
-                    if (resp !== undefined && resp !== null) {
-                        const val = parseInt(resp, 10);
-                        if (!isNaN(val) && val >= 1 && val <= 5) {
-                            counts[val - 1]++;
-                            respondentsForQ++;
-                        }
+            copsoqEvals.forEach(ev => {
+                const resp = ev.responses[qId];
+                if (resp !== undefined && resp !== null) {
+                    const val = parseInt(resp, 10);
+                    if (!isNaN(val) && val >= 1 && val <= 5) {
+                        counts[val - 1]++;
+                        respondentsForQ++;
                     }
-                });
-
-                if (respondentsForQ > 0) {
-                    questions.push({ id: qId, text: qText, respondents: respondentsForQ, counts });
                 }
-            }
+            });
 
-            if (questions.length > 0) {
-                sectorDomains.push({ nome: dom.nome, questions });
+            if (respondentsForQ > 0) {
+                questions.push({ id: qId, text: qText, respondents: respondentsForQ, counts });
             }
         }
 
-        // Gerar gráficos para todas as perguntas do setor
-        for (const dom of sectorDomains) {
-            for (const q of dom.questions) {
-                const labels = [];
-                const data = [];
-                const colors = [];
-
-                for (let i = 0; i < 5; i++) {
-                    if (q.counts[i] > 0) {
-                        labels.push(OPTIONS[i].label);
-                        data.push(q.counts[i]);
-                        colors.push(OPTIONS[i].color);
-                    }
-                }
-
-                q.chartImage = await renderPieChart(labels, data, colors, q.respondents);
-            }
+        if (questions.length > 0) {
+            allDomains.push({ nome: dom.nome, questions });
         }
-
-        processedSectors.push({ sectorName, totalRespondents, domains: sectorDomains });
     }
 
-    processedSectors.sort((a, b) => a.sectorName.localeCompare(b.sectorName, 'pt-BR'));
+    // Gerar gráficos para todas as perguntas
+    for (const dom of allDomains) {
+        for (const q of dom.questions) {
+            const labels = [];
+            const data = [];
+            const colors = [];
+
+            for (let i = 0; i < 5; i++) {
+                if (q.counts[i] > 0) {
+                    labels.push(OPTIONS[i].label);
+                    data.push(q.counts[i]);
+                    colors.push(OPTIONS[i].color);
+                }
+            }
+
+            q.chartImage = await renderPieChart(labels, data, colors, q.respondents);
+        }
+    }
 
     // ── Construção do documento ──────────────────────────────────────────────
     const docChildren = [];
@@ -249,46 +234,33 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
         new Paragraph({
             children: [new TextRun({ text: `Empresa: ${companyName || 'Não identificada'}`, size: 28, color: '2E4057' })],
             alignment: AlignmentType.CENTER,
+            spacing: { after: 200 },
+        }),
+        new Paragraph({
+            children: [new TextRun({ text: `Total de Avaliações: ${totalRespondents}`, size: 22, color: '595959' })],
+            alignment: AlignmentType.CENTER,
             spacing: { after: 800 },
         }),
     );
 
-    let firstSector = true;
-
-    for (const sector of processedSectors) {
-        // Nova página para cada setor (exceto o primeiro que já está após a capa)
-        const sectorTitleChildren = [];
-        if (!firstSector) sectorTitleChildren.push(new PageBreak());
-        sectorTitleChildren.push(
-            new TextRun({ text: `Setor: ${sector.sectorName}`, bold: true, size: 40, color: '1F4E79' })
-        );
-        firstSector = false;
-
+    for (const dom of allDomains) {
+        // Subtítulo do domínio
         docChildren.push(
             new Paragraph({
-                children: sectorTitleChildren,
-                spacing: { before: 200, after: 320 },
+                children: [
+                    new TextRun({ text: dom.nome, bold: true, size: 32, color: '1F4E79' })
+                ],
+                spacing: { before: 400, after: 200 },
                 keepNext: true,
+                keepLines: true,
             })
         );
 
-        for (const dom of sector.domains) {
-            // Subtítulo do domínio
-            docChildren.push(
-                new Paragraph({
-                    children: [new TextRun({ text: dom.nome, bold: true, size: 28, color: '404040' })],
-                    spacing: { before: 320, after: 120 },
-                    keepNext: true,
-                    keepLines: true,
-                })
-            );
-
-            // Cada pergunta com seu bloco (título + respondentes + gráfico)
-            dom.questions.forEach((q, idx) => {
-                const blocks = buildQuestionBlock(q);
-                docChildren.push(...blocks);
-            });
-        }
+        // Cada pergunta com seu bloco (título + respondentes + gráfico)
+        dom.questions.forEach((q, idx) => {
+            const blocks = buildQuestionBlock(q);
+            docChildren.push(...blocks);
+        });
     }
 
     // ── Montar Document ──────────────────────────────────────────────────────
