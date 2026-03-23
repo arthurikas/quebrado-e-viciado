@@ -160,7 +160,7 @@ function buildQuestionBlock(q) {
 }
 
 export async function generateGeneralAnalyticalReport(evaluations, companyName) {
-    const copsoqEvals = evaluations.filter(ev => ev.type === 'COPSOQ' && ev.respostas);
+    const copsoqEvals = evaluations.filter(ev => ev.type === 'COPSOQ' && ev.responses);
 
     if (copsoqEvals.length === 0) {
         alert('Não há avaliações COPSOQ com respostas para gerar este relatório.');
@@ -192,7 +192,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
                 let respondentsForQ = 0;
 
                 evals.forEach(ev => {
-                    const resp = ev.respostas[qId];
+                    const resp = ev.responses[qId];
                     if (resp !== undefined && resp !== null) {
                         const val = parseInt(resp, 10);
                         if (!isNaN(val) && val >= 1 && val <= 5) {
