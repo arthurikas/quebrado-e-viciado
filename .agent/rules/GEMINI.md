@@ -95,6 +95,15 @@ When auto-applying an agent, inform the user:
 
 ## TIER 0: UNIVERSAL RULES (Always Active)
 
+### 🚀 DEPLOYMENT & GIT PUSH PROTOCOL (MANDATORY)
+
+**Whenever the user asks to "commit", "push", "deploy", or "reconstruir no easypanel":**
+
+1. **NEVER** use the standard `git` command (it will fail in this PowerShell environment).
+2. **MANDATORY:** You MUST read the absolute path to the Git executable from the file `git_location.txt` located in the root of the project.
+3. **Execution:** Use PowerShell invocation (`& "PATH_FROM_TXT" add .`, then `commit`, then `push`).
+4. **Completion:** Do not ask the user for permission to run these commands if they requested a commit/push. Run them, and then inform the user they can proceed to "Rebuild" on Easypanel.
+
 ### 🌐 Language Handling
 
 When user's prompt is NOT in English:

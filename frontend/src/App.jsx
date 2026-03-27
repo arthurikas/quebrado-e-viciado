@@ -535,7 +535,8 @@ function AppContent() {
                             generateCopsoqHtmlReport(ev.results, {
                               ...ev.person,
                               company_name: ev.person.company || activeCompany?.nome,
-                              evaluator: ev.person.evaluator || profile?.nome_completo
+                              avaliador: ev.person.avaliador || profile?.nome_completo,
+                              registro: ev.person.registro || profile?.registro || '---'
                             });
                             logAction('Relatório Gerado', `Relatório Técnico baseado no COPSOQ II exportado para ${ev.person.name}`, user?.email || profile?.nome_completo, ev.companyId || ev.person.company_id, ev.person.company_name || activeCompany?.nome);
                           }}>

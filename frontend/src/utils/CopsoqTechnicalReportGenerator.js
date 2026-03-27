@@ -113,11 +113,14 @@ export function generateCopsoqHtmlReport(results, personData) {
         return `<p><strong>${d.num}. ${d.label}:</strong> ${implications}</p>`;
     }).join('');
 
-    const date = new Date(personData.date || Date.now()).toLocaleDateString('pt-BR');
-    const company = personData.company_name || personData.company || 'Não identificada';
-    const sector  = personData.sector || 'Geral';
-    const cnpj    = personData.cnpj || '---';
-    const address = personData.address || '---';
+    const BLANK = '<span style="display:inline-block;min-width:200px;border-bottom:1px solid #333;">&nbsp;</span>';
+    const date      = personData.date ? new Date(personData.date).toLocaleDateString('pt-BR') : BLANK;
+    const company   = personData.company_name || personData.company || BLANK;
+    const sector    = personData.sector || BLANK;
+    const cnpj      = personData.cnpj || BLANK;
+    const address   = personData.address || BLANK;
+    const avaliador = personData.avaliador || personData.evaluator || BLANK;
+    const registro  = personData.registro || personData.registration || BLANK;
 
     // Chart generation helper (Radar)
     const abbreviateDomain = (name) => {
@@ -316,7 +319,7 @@ export function generateCopsoqHtmlReport(results, personData) {
         <div class="cover-fields">
             <div class="field"><b>Empresa:</b> ${company}</div>
             <div class="field"><b>Data da Avaliação:</b> ${date}</div>
-            <div class="field"><b>Avaliador:</b> Tatiana Coaracy</div>
+            <div class="field"><b>Avaliador:</b> ${avaliador}</div>
             <div class="field"><b>Setor:</b> ${sector}</div>
         </div>
     </div>
@@ -376,8 +379,8 @@ export function generateCopsoqHtmlReport(results, personData) {
 
         <h3>4.2 Responsável Técnico pela Avaliação</h3>
         <div class="data-grid">
-            <div class="data-item"><b>Nome:</b> Tatiana Coaracy</div>
-            <div class="data-item"><b>Registro Profissional:</b> CREA/MTE: ---</div>
+            <div class="data-item"><b>Nome:</b> ${avaliador}</div>
+            <div class="data-item"><b>Registro Profissional:</b> ${registro}</div>
             <div class="data-item"><b>Especialidade:</b> Engenharia de Segurança do Trabalho</div>
             <div class="data-item"><b>Revisão Técnica:</b> Eng. Carlos Rogério C. Santos</div>
             <div class="data-item"><b>Produção Editorial:</b> Labor Treinamentos</div>
@@ -391,7 +394,7 @@ export function generateCopsoqHtmlReport(results, personData) {
         <h2>Seção V — Metodologia e Perfil dos Participantes</h2>
 
         <h3>5.1 Metodologia Utilizada</h3>
-        <p>A avaliação foi conduzida com base na versão brasileira adaptada e validada do COPSOQ II, selecionado por sua robustez científica, abrangência temática e adaptabilidade a differentes contextos organizacionais. O instrumento contempla as seguintes dimensões e domínios:</p>
+        <p>A avaliação foi conduzida com base na versão brasileira adaptada e validada do COPSOQ II, selecionado por sua robustez científica, abrangência temática e adaptabilidade a diferentes contextos organizacionais. O instrumento contempla as seguintes dimensões e domínios:</p>
         <ul>
             <li>Exigências quantitativas, cognitivas e emocionais do trabalho;</li>
             <li>Influência no trabalho, possibilidades de desenvolvimento e sentido do trabalho;</li>
@@ -405,10 +408,10 @@ export function generateCopsoqHtmlReport(results, personData) {
 
         <h3>5.2 Perfil dos Participantes</h3>
         <div class="data-grid">
-            <div class="data-item"><b>Total de Respondentes:</b> ${personData.totalRespondents || '---'}</div>
-            <div class="data-item"><b>Distribuição por Sexo:</b> ${personData.sexDistribution || 'M: --- | F: ---'}</div>
-            <div class="data-item"><b>Faixa Etária Média:</b> ${personData.avgAge || '---'}</div>
-            <div class="data-item"><b>Tempo Médio de Empresa:</b> ${personData.avgTenure || '---'}</div>
+            <div class="data-item"><b>Total de Respondentes:</b> ${personData.totalRespondents || BLANK}</div>
+            <div class="data-item"><b>Distribuição por Sexo:</b> M: ${personData.sexM || BLANK} &nbsp;|&nbsp; F: ${personData.sexF || BLANK}</div>
+            <div class="data-item"><b>Faixa Etária Média:</b> ${personData.avgAge || BLANK}</div>
+            <div class="data-item"><b>Tempo Médio de Empresa:</b> ${personData.avgTenure || BLANK}</div>
             <div class="data-item"><b>Setores Representados:</b> ${sector}</div>
         </div>
     </section>
@@ -511,10 +514,10 @@ export function generateCopsoqHtmlReport(results, personData) {
 
         <div class="signature-block">
             <div class="signature-line">
-                Tatiana Coaracy<br>
+                ${personData.avaliador || personData.evaluator || BLANK}<br>
                 <b>Engenheira de Segurança do Trabalho</b><br>
-                Registro Profissional: CREA/MTE: ---<br>
-                Data de Emissão: ${new Date().toLocaleDateString('pt-BR')}
+                Registro Profissional: ${personData.registro || personData.registration || BLANK}<br>
+                Data de Emissão: ${personData.date ? new Date(personData.date).toLocaleDateString('pt-BR') : BLANK}
             </div>
             <br><br>
             <div style="font-size:10px; color:#666; margin-top:16px;">

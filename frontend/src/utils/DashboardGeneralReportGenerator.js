@@ -35,12 +35,26 @@ const DOMAIN_MAP = [
 
 // Opções COPSOQ — cores fixas conforme especificação
 const OPTIONS = [
-    { label: "Quase Nunca/Nunca",         color: "#4472C4" },
-    { label: "Poucas Vezes",              color: "#E05A2B" },
-    { label: "Algumas Vezes",             color: "#F5A623" },
-    { label: "Frequentemente",            color: "#5DAE5D" },
-    { label: "Muito Frequentemente/Sempre", color: "#8E44AD" },
+    { label: "Quase Nunca/Nunca",            color: "#4472C4" },
+    { label: "Poucas Vezes",                 color: "#E05A2B" },
+    { label: "Algumas Vezes",                color: "#F5A623" },
+    { label: "Frequentemente",               color: "#5DAE5D" },
+    { label: "Muito Frequentemente/Sempre",  color: "#8E44AD" },
 ];
+
+// Cores de risco
+const RISK_COLORS = { Alto: '#E74C3C', Médio: '#F39C12', Baixo: '#27AE60' };
+
+function getRiskLevel(score) {
+    if (score >= 75) return 'Baixo';
+    if (score >= 50) return 'Médio';
+    return 'Alto';
+}
+
+// Converte valor COPSOQ (1–5) em índice 0–100
+function responseToIndex(val) {
+    return ((val - 1) / 4) * 100;
+}
 
 // Plugin: percentuais em branco negrito dentro das fatias
 const innerPercentPlugin = {
@@ -74,7 +88,6 @@ const innerPercentPlugin = {
 
 async function renderPieChart(labels, data, colors, total) {
     return new Promise((resolve) => {
-        // Renderiza em alta resolução (900×360) → inserido no DOCX como 450×180 pt (≈ 5cm height)
         const canvas = document.createElement('canvas');
         canvas.width = 900;
         canvas.height = 360;
@@ -127,8 +140,6 @@ function b64ToBytes(base64) {
     return bytes;
 }
 
-// Bloco de uma pergunta: [titlePara, respondentsPara, imagePara]
-// Todos com keepNext = true, exceto o último que tem keepLines
 function buildQuestionBlock(q) {
     const titlePara = new Paragraph({
         children: [new TextRun({ text: `Q${q.id}. ${q.text}`, bold: true, size: 22 })],
@@ -159,6 +170,45 @@ function buildQuestionBlock(q) {
     return [titlePara, respondentsPara, imagePara];
 }
 
+function buildRiskDomainBlock(domainName, riskCounts, totalInSector, avgScore, riskChartImage) {
+    const riskLevel = getRiskLevel(avgScore);
+    const riskColor = riskLevel === 'Alto' ? 'C0392B' : riskLevel === 'Médio' ? 'D68910' : '1E8449';
+
+    const domainTitle = new Paragraph({
+        children: [new TextRun({ text: `📊 ${domainName}`, bold: true, size: 26, color: '1F4E79' })],
+        spacing: { before: 300, after: 60 },
+        keepNext: true,
+        keepLines: true,
+    });
+
+    const riskSummary = new Paragraph({
+        children: [
+            new TextRun({ text: `Índice Médio do Setor: `, size: 20 }),
+            new TextRun({ text: `${avgScore.toFixed(1)}`, bold: true, size: 20 }),
+            new TextRun({ text: `   |   Nível de Risco: `, size: 20 }),
+            new TextRun({ text: riskLevel, bold: true, size: 20, color: riskColor }),
+            new TextRun({ text: `   |   Alto: ${riskCounts.Alto}p  Médio: ${riskCounts.Médio}p  Baixo: ${riskCounts.Baixo}p`, size: 18, color: '595959' }),
+        ],
+        spacing: { after: 60 },
+        keepNext: true,
+        keepLines: true,
+    });
+
+    const riskImagePara = new Paragraph({
+        children: [
+            new ImageRun({
+                data: b64ToBytes(riskChartImage),
+                transformation: { width: 380, height: 152 },
+                type: 'png',
+            })
+        ],
+        spacing: { after: 160 },
+        keepLines: true,
+    });
+
+    return [domainTitle, riskSummary, riskImagePara];
+}
+
 export async function generateGeneralAnalyticalReport(evaluations, companyName) {
     const copsoqEvals = evaluations.filter(ev => ev.type === 'COPSOQ' && ev.responses);
 
@@ -168,102 +218,172 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
     }
 
     const totalRespondents = copsoqEvals.length;
-    const allDomains = [];
 
-    // Processar todas as avaliações juntas
-    for (const dom of DOMAIN_MAP) {
-        const questions = [];
+    // ── 1. Agrupar avaliações por setor ───────────────────────────────────────
+    const sectorMap = {};
+    copsoqEvals.forEach(ev => {
+        const sector = (ev.person?.sector || 'Setor não informado').trim();
+        if (!sectorMap[sector]) sectorMap[sector] = [];
+        sectorMap[sector].push(ev);
+    });
 
-        for (const qId of dom.qs) {
-            const qDef = COPSOQ_QUESTIONS.find(q => q.id === qId);
-            const qText = qDef ? qDef.text : `Pergunta ${qId}`;
+    // ── 2. Processar dados por setor ──────────────────────────────────────────
+    const sectorsData = [];
 
-            const counts = [0, 0, 0, 0, 0];
-            let respondentsForQ = 0;
+    for (const [sectorName, sectorEvals] of Object.entries(sectorMap)) {
+        const n = sectorEvals.length;
+        const domains = [];
 
-            copsoqEvals.forEach(ev => {
-                const resp = ev.responses[qId];
-                if (resp !== undefined && resp !== null) {
-                    const val = parseInt(resp, 10);
-                    if (!isNaN(val) && val >= 1 && val <= 5) {
-                        counts[val - 1]++;
-                        respondentsForQ++;
+        for (const dom of DOMAIN_MAP) {
+            // Calcular índice médio por pessoa e classificar risco
+            const riskCounts = { Alto: 0, Médio: 0, Baixo: 0 };
+            let domainScoreSum = 0;
+            let domainScoreCount = 0;
+
+            sectorEvals.forEach(ev => {
+                const personScores = dom.qs.map(qId => {
+                    const resp = ev.responses[qId];
+                    if (resp !== undefined && resp !== null) {
+                        const val = parseInt(resp, 10);
+                        if (!isNaN(val) && val >= 1 && val <= 5) return responseToIndex(val);
                     }
+                    return null;
+                }).filter(s => s !== null);
+
+                if (personScores.length > 0) {
+                    const personAvg = personScores.reduce((a, b) => a + b, 0) / personScores.length;
+                    domainScoreSum += personAvg;
+                    domainScoreCount++;
+                    riskCounts[getRiskLevel(personAvg)]++;
                 }
             });
 
-            if (respondentsForQ > 0) {
-                questions.push({ id: qId, text: qText, respondents: respondentsForQ, counts });
-            }
-        }
+            const avgScore = domainScoreCount > 0 ? domainScoreSum / domainScoreCount : 0;
 
-        if (questions.length > 0) {
-            allDomains.push({ nome: dom.nome, questions });
-        }
-    }
+            // Gráfico Nível 1: pizza tricolor de risco
+            const riskLabels = [], riskData = [], riskColors = [];
+            ['Alto', 'Médio', 'Baixo'].forEach(level => {
+                if (riskCounts[level] > 0) {
+                    riskLabels.push(`${level} (${riskCounts[level]}p)`);
+                    riskData.push(riskCounts[level]);
+                    riskColors.push(RISK_COLORS[level]);
+                }
+            });
 
-    // Gerar gráficos para todas as perguntas
-    for (const dom of allDomains) {
-        for (const q of dom.questions) {
-            const labels = [];
-            const data = [];
-            const colors = [];
+            const totalRiskRespondents = riskCounts.Alto + riskCounts.Médio + riskCounts.Baixo;
+            const riskChartImage = totalRiskRespondents > 0
+                ? await renderPieChart(riskLabels, riskData, riskColors, totalRiskRespondents)
+                : null;
 
-            for (let i = 0; i < 5; i++) {
-                if (q.counts[i] > 0) {
-                    labels.push(OPTIONS[i].label);
-                    data.push(q.counts[i]);
-                    colors.push(OPTIONS[i].color);
+            // Gráfico Nível 2: frequência por pergunta (filtrado pelo setor)
+            const questions = [];
+            for (const qId of dom.qs) {
+                const qDef = COPSOQ_QUESTIONS.find(q => q.id === qId);
+                const qText = qDef ? qDef.text : `Pergunta ${qId}`;
+                const counts = [0, 0, 0, 0, 0];
+                let respondentsForQ = 0;
+
+                sectorEvals.forEach(ev => {
+                    const resp = ev.responses[qId];
+                    if (resp !== undefined && resp !== null) {
+                        const val = parseInt(resp, 10);
+                        if (!isNaN(val) && val >= 1 && val <= 5) {
+                            counts[val - 1]++;
+                            respondentsForQ++;
+                        }
+                    }
+                });
+
+                if (respondentsForQ > 0) {
+                    const labels = [], data = [], colors = [];
+                    for (let i = 0; i < 5; i++) {
+                        if (counts[i] > 0) {
+                            labels.push(OPTIONS[i].label);
+                            data.push(counts[i]);
+                            colors.push(OPTIONS[i].color);
+                        }
+                    }
+                    const chartImage = await renderPieChart(labels, data, colors, respondentsForQ);
+                    questions.push({ id: qId, text: qText, respondents: respondentsForQ, chartImage });
                 }
             }
 
-            q.chartImage = await renderPieChart(labels, data, colors, q.respondents);
+            if (totalRiskRespondents > 0 || questions.length > 0) {
+                domains.push({ nome: dom.nome, avgScore, riskCounts, riskChartImage, questions });
+            }
+        }
+
+        if (domains.length > 0) {
+            sectorsData.push({ name: sectorName, n, domains });
         }
     }
 
-    // ── Construção do documento ──────────────────────────────────────────────
+    // ── 3. Construir documento DOCX ───────────────────────────────────────────
     const docChildren = [];
 
-    // Capa simples
+    // Capa
     docChildren.push(
         new Paragraph({
-            children: [new TextRun({ text: 'Relatório Analítico Geral por Pergunta', bold: true, size: 40, color: '1F4E79' })],
+            children: [new TextRun({ text: 'Relatório Analítico Geral por Setor', bold: true, size: 40, color: '1F4E79' })],
             alignment: AlignmentType.CENTER,
             spacing: { before: 480, after: 200 },
         }),
         new Paragraph({
             children: [new TextRun({ text: `Empresa: ${companyName || 'Não identificada'}`, size: 28, color: '2E4057' })],
             alignment: AlignmentType.CENTER,
-            spacing: { after: 200 },
+            spacing: { after: 100 },
         }),
         new Paragraph({
-            children: [new TextRun({ text: `Total de Avaliações: ${totalRespondents}`, size: 22, color: '595959' })],
+            children: [new TextRun({ text: `Total Geral de Avaliações: ${totalRespondents}`, size: 22, color: '595959' })],
+            alignment: AlignmentType.CENTER,
+            spacing: { after: 100 },
+        }),
+        new Paragraph({
+            children: [new TextRun({ text: `Setores avaliados: ${sectorsData.length}`, size: 22, color: '595959' })],
             alignment: AlignmentType.CENTER,
             spacing: { after: 800 },
         }),
     );
 
-    for (const dom of allDomains) {
-        // Subtítulo do domínio
+    for (const sector of sectorsData) {
+        // Quebra de página antes de cada setor (exceto o primeiro)
+        if (docChildren.length > 4) {
+            docChildren.push(new Paragraph({ children: [new PageBreak()] }));
+        }
+
+        // Cabeçalho do setor
         docChildren.push(
             new Paragraph({
-                children: [
-                    new TextRun({ text: dom.nome, bold: true, size: 32, color: '1F4E79' })
-                ],
-                spacing: { before: 400, after: 200 },
+                children: [new TextRun({ text: `SETOR: ${sector.name.toUpperCase()}`, bold: true, size: 36, color: '1B4D3E' })],
+                spacing: { before: 200, after: 80 },
                 keepNext: true,
-                keepLines: true,
-            })
+            }),
+            new Paragraph({
+                children: [new TextRun({ text: `N = ${sector.n} respondente${sector.n !== 1 ? 's' : ''}`, size: 22, color: '7F7F7F', italics: true })],
+                spacing: { after: 300 },
+            }),
         );
 
-        // Cada pergunta com seu bloco (título + respondentes + gráfico)
-        dom.questions.forEach((q, idx) => {
-            const blocks = buildQuestionBlock(q);
-            docChildren.push(...blocks);
-        });
+        for (const dom of sector.domains) {
+            // Nível 1: cabeçalho do domínio + gráfico de risco
+            if (dom.riskChartImage) {
+                const riskBlocks = buildRiskDomainBlock(
+                    dom.nome, dom.riskCounts,
+                    dom.riskCounts.Alto + dom.riskCounts.Médio + dom.riskCounts.Baixo,
+                    dom.avgScore,
+                    dom.riskChartImage
+                );
+                docChildren.push(...riskBlocks);
+            }
+
+            // Nível 2: perguntas do domínio filtradas pelo setor
+            for (const q of dom.questions) {
+                docChildren.push(...buildQuestionBlock(q));
+            }
+        }
     }
 
-    // ── Montar Document ──────────────────────────────────────────────────────
+    // ── 4. Montar Document ────────────────────────────────────────────────────
     const doc = new Document({
         styles: {
             default: {
@@ -272,7 +392,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
         },
         sections: [{
             properties: {
-                page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } } // ~2cm
+                page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } }
             },
             headers: {
                 default: new Header({

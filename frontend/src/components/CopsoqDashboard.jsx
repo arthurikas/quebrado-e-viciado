@@ -74,7 +74,11 @@ const CopsoqDashboard = ({ results, person, onBack }) => {
                     </button>
                     <button
                         className="btn-primary"
-                        onClick={() => generateCopsoqHtmlReport(results, person)}
+                        onClick={() => generateCopsoqHtmlReport(results, {
+                            ...person,
+                            avaliador: person.avaliador || person.evaluator,
+                            registro: person.registro || person.registration || '---'
+                        })}
                         style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', padding: '0.5rem 1rem', background: '#2c3e50', color: 'white', borderRadius: '4px', border: 'none', cursor: 'pointer' }}
                     >
                         <FileText size={18} /> Relatório Técnico
