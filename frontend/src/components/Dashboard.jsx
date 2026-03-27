@@ -1,5 +1,5 @@
 import React, { useMemo, useState } from 'react';
-import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid } from 'recharts';
+import { Radar, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, ResponsiveContainer, PieChart, Pie, Cell, Tooltip, BarChart, Bar, XAxis, YAxis, CartesianGrid, LabelList, ReferenceLine } from 'recharts';
 import calculator from '../utils/calculations';
 import { AEP_CATEGORIES } from '../utils/questions';
 import { filterData, aggregateCopsoq, aggregateAep, generateAepActionPlan } from '../utils/analytics';
@@ -432,30 +432,41 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                         {/* Radar COPSOQ */}
                         <div className="card">
                             <h3>Média Psicossocial (COPSOQ II)</h3>
-                            <div style={{ height: '500px', width: '100%', marginTop: '1rem' }}>
+                            <p style={{ fontSize: '0.82rem', color: '#888', margin: '0 0 0.75rem', textAlign: 'center' }}>
+                                Escala de 0 a 100 — quanto maior o índice, menor o risco
+                            </p>
+                            <div style={{ height: '530px', width: '100%', marginTop: '0.5rem' }}>
                                 {radarData.length > 0 ? (
                                     <ResponsiveContainer width="100%" height="100%">
                                         <BarChart
                                             data={radarData} layout="vertical"
-                                            margin={{ top: 5, right: 30, left: 160, bottom: 5 }}
+                                            margin={{ top: 5, right: 55, left: 160, bottom: 5 }}
                                         >
                                             <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                            <XAxis type="number" domain={[0, 100]} />
+                                            <XAxis type="number" domain={[0, 100]} tickCount={6}
+                                                label={{ value: 'Índice (0–100)', position: 'insideBottom', offset: -2, fontSize: 11, fill: '#888' }} />
                                             <YAxis type="category" dataKey="area" width={150} style={{ fontSize: '11px' }} />
-                                            <Tooltip formatter={(value) => [`${value}`, 'Pontuação']} />
+                                            <Tooltip formatter={(value) => [`${Number(value).toFixed(1)}`, 'Pontuação']} />
+                                            <ReferenceLine x={50} stroke="#e53935" strokeDasharray="4 3" strokeWidth={1.5}
+                                                label={{ value: 'Limiar Alto/Médio (50)', position: 'top', fontSize: 10, fill: '#e53935' }} />
+                                            <ReferenceLine x={75} stroke="#4caf50" strokeDasharray="4 3" strokeWidth={1.5}
+                                                label={{ value: 'Limiar Médio/Baixo (75)', position: 'top', fontSize: 10, fill: '#4caf50' }} />
                                             <Bar dataKey="media" radius={[0, 4, 4, 0]}>
                                                 {radarData.map((entry, index) => (
                                                     <Cell key={`cell-${index}`} fill={entry.media >= 75 ? '#4caf50' : entry.media >= 50 ? '#ffa726' : '#e53935'} />
                                                 ))}
+                                                <LabelList dataKey="media" position="right"
+                                                    formatter={(v) => Number(v).toFixed(1)}
+                                                    style={{ fontSize: '11px', fontWeight: 'bold', fill: '#333' }} />
                                             </Bar>
                                         </BarChart>
                                     </ResponsiveContainer>
                                 ) : <p style={{ padding: '2rem', textAlign: 'center', color: '#888' }}>Sem dados COPSOQ para os filtros selecionados.</p>}
                             </div>
-                            <div style={{ display: 'flex', justifyContent: 'center', gap: '1rem', marginTop: '1rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
-                                <span style={{ color: '#e53935' }}>● Alto Risco (0-49)</span>
-                                <span style={{ color: '#ffa726' }}>● Médio (50-74)</span>
-                                <span style={{ color: '#4caf50' }}>● Baixo (75-100)</span>
+                            <div style={{ display: 'flex', justifyContent: 'center', gap: '1.5rem', marginTop: '0.75rem', fontSize: '0.8rem', flexWrap: 'wrap' }}>
+                                <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#e53935', borderRadius: 2, marginRight: 4 }} />Alto Risco (0–49)</span>
+                                <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#ffa726', borderRadius: 2, marginRight: 4 }} />Médio (50–74)</span>
+                                <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#4caf50', borderRadius: 2, marginRight: 4 }} />Baixo / Favorável (75–100)</span>
                             </div>
                         </div>
 

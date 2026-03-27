@@ -1,5 +1,5 @@
 import React from 'react';
-import { ResponsiveContainer, RadarChart, PolarGrid, PolarAngleAxis, PolarRadiusAxis, Radar, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Cell } from 'recharts';
+import { ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, Cell, LabelList, ReferenceLine } from 'recharts';
 import { ArrowLeft, Download, FileText } from 'lucide-react';
 import { generateCopsoqHtmlReport } from '../utils/CopsoqTechnicalReportGenerator';
 
@@ -102,23 +102,44 @@ const CopsoqDashboard = ({ results, person, onBack }) => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'minmax(400px, 1fr) 1fr', gap: '2rem', marginBottom: '2rem' }}>
-                {/* Radar Chart */}
+                {/* Bar Chart — Índices por Domínio */}
                 <div className="card" style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-                    <h3>Visão Geral (Radar)</h3>
-                    <div style={{ width: '100%', height: '500px', marginTop: '1rem' }}>
+                    <h3>Índice por Domínio Psicossocial</h3>
+                    <p style={{ fontSize: '0.82rem', color: '#888', margin: '0 0 0.75rem', textAlign: 'center' }}>
+                        Escala de 0 a 100 — quanto maior o índice, menor o risco
+                    </p>
+                    <div style={{ width: '100%', height: '560px', marginTop: '0.5rem' }}>
                         <ResponsiveContainer>
-                            <BarChart data={domainData} layout="vertical" margin={{ top: 5, right: 30, left: 160, bottom: 5 }}>
+                            <BarChart data={domainData} layout="vertical" margin={{ top: 5, right: 55, left: 160, bottom: 5 }}>
                                 <CartesianGrid strokeDasharray="3 3" horizontal={true} vertical={false} />
-                                <XAxis type="number" domain={[0, 100]} />
+                                <XAxis type="number" domain={[0, 100]} tickCount={6}
+                                    label={{ value: 'Índice (0–100)', position: 'insideBottom', offset: -2, fontSize: 11, fill: '#888' }} />
                                 <YAxis type="category" dataKey="shortName" width={150} style={{ fontSize: '11px' }} />
-                                <RechartsTooltip formatter={(value) => [`${value.toFixed(1)}`, 'Pontuação']} />
+                                <RechartsTooltip
+                                    formatter={(value, name, props) => [
+                                        `${value.toFixed(1)} — ${props.payload.classificacao}`,
+                                        props.payload.name
+                                    ]}
+                                />
+                                <ReferenceLine x={50} stroke="#E74C3C" strokeDasharray="4 3" strokeWidth={1.5}
+                                    label={{ value: 'Limiar Alto/Médio (50)', position: 'top', fontSize: 10, fill: '#E74C3C' }} />
+                                <ReferenceLine x={75} stroke="#27AE60" strokeDasharray="4 3" strokeWidth={1.5}
+                                    label={{ value: 'Limiar Médio/Baixo (75)', position: 'top', fontSize: 10, fill: '#27AE60' }} />
                                 <Bar dataKey="score" radius={[0, 4, 4, 0]}>
                                     {domainData.map((entry, index) => (
                                         <Cell key={`cell-${index}`} fill={entry.color} />
                                     ))}
+                                    <LabelList dataKey="score" position="right"
+                                        formatter={(v) => v.toFixed(1)}
+                                        style={{ fontSize: '11px', fontWeight: 'bold', fill: '#333' }} />
                                 </Bar>
                             </BarChart>
                         </ResponsiveContainer>
+                    </div>
+                    <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.75rem', fontSize: '0.8rem', flexWrap: 'wrap', justifyContent: 'center' }}>
+                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#E74C3C', borderRadius: 2, marginRight: 4 }} />Alto Risco (0–49)</span>
+                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#F39C12', borderRadius: 2, marginRight: 4 }} />Médio (50–74)</span>
+                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#27AE60', borderRadius: 2, marginRight: 4 }} />Baixo / Favorável (75–100)</span>
                     </div>
                 </div>
 
