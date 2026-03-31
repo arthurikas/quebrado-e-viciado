@@ -6,6 +6,7 @@ import {
 import { saveAs } from 'file-saver';
 import { Chart, registerables } from 'chart.js';
 import { COPSOQ_QUESTIONS } from './copsoq_data.js';
+import { buildTechnicalReportIntro } from './ReportIntroGenerator.js';
 
 Chart.register(...registerables);
 
@@ -273,13 +274,50 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
 
     const totalRespondents = copsoqEvals.length;
 
+    let countM = 0, countF = 0;
+    let sumAge = 0, countAge = 0, minAge = 999, maxAge = 0;
+    let sumTime = 0, countTime = 0, minTime = 999, maxTime = 0;
+
     // ── 1. Agrupar avaliações por setor para a tabela ─────────────────────────
     const sectorMap = {};
     copsoqEvals.forEach(ev => {
         const sector = (ev.person?.sector || 'Setor não informado').trim();
         if (!sectorMap[sector]) sectorMap[sector] = [];
         sectorMap[sector].push(ev);
+
+        if (ev.person) {
+            const g = (ev.person.gender || '').toLowerCase();
+            if (g.startsWith('m')) countM++;
+            else if (g.startsWith('f')) countF++;
+
+            const a = Number(ev.person.age);
+            if (!isNaN(a) && a > 0) {
+                sumAge += a; countAge++;
+                if (a < minAge) minAge = a;
+                if (a > maxAge) maxAge = a;
+            }
+
+            const t = Number(ev.person.timeInCompany);
+            if (!isNaN(t) && t >= 0) {
+                sumTime += t; countTime++;
+                if (t < minTime) minTime = t;
+                if (t > maxTime) maxTime = t;
+            }
+        }
     });
+
+    const pctM = totalRespondents ? Math.round((countM/totalRespondents)*100) : 0;
+    const pctF = totalRespondents ? Math.round((countF/totalRespondents)*100) : 0;
+    const avgAge = countAge ? Math.round(sumAge/countAge) : 0;
+    const avgTime = countTime ? (sumTime/countTime).toFixed(1) : 0;
+
+    const demographicData = {
+        totalRespondents,
+        pctM, pctF,
+        avgAge, minAge: minAge===999 ? 0 : minAge, maxAge,
+        avgTime, minTime: minTime===999 ? 0 : minTime, maxTime
+    };
+
     const sectorNames = Object.keys(sectorMap).sort();
 
     // ── 2. Processar dados por Domínio (Visão Global) ─────────────────────────
@@ -409,27 +447,15 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
     // ── 3. Construir documento DOCX ───────────────────────────────────────────
     const docChildren = [];
 
-    // Capa
+    const introBlocks = buildTechnicalReportIntro(companyName, demographicData, domainsData, sectorMap);
+    docChildren.push(...introBlocks);
+
+    docChildren.push(new Paragraph({ children: [new PageBreak()] }));
     docChildren.push(
         new Paragraph({
-            children: [new TextRun({ text: 'Relatório Analítico Consolidado', bold: true, size: 40, color: '1F4E79' })],
+            children: [new TextRun({ text: 'ANEXO I - DETALHAMENTO DE GRÁFICOS', bold: true, size: 36, color: '1F4E79' })],
             alignment: AlignmentType.CENTER,
-            spacing: { before: 480, after: 200 },
-        }),
-        new Paragraph({
-            children: [new TextRun({ text: `Empresa: ${companyName || 'Não identificada'}`, size: 28, color: '2E4057' })],
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 100 },
-        }),
-        new Paragraph({
-            children: [new TextRun({ text: `Total Geral de Avaliações: ${totalRespondents}`, size: 22, color: '595959' })],
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 100 },
-        }),
-        new Paragraph({
-            children: [new TextRun({ text: `Detalhamento Global da Empresa e Tabela de Risco por Setor`, size: 22, color: '595959', italics: true })],
-            alignment: AlignmentType.CENTER,
-            spacing: { after: 800 },
+            spacing: { before: 800, after: 400 },
         })
     );
 
