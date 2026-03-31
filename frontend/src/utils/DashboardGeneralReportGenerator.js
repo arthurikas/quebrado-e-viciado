@@ -170,9 +170,9 @@ function buildQuestionBlock(q) {
     return [titlePara, respondentsPara, imagePara];
 }
 
-function buildRiskDomainBlock(domainName, riskCounts, totalInSector, avgScore, riskChartImage) {
+function buildRiskDomainBlock(domainName, riskCounts, totalRespondents, avgScore, riskChartImage, typeLabel = 'Global') {
     const riskLevel = getRiskLevel(avgScore);
-    const riskColor = riskLevel === 'Alto' ? 'C0392B' : riskLevel === 'Médio' ? 'D68910' : '1E8449';
+    const riskColor = riskLevel === 'Alto' ? '#C0392B' : riskLevel === 'Médio' ? '#D68910' : '#1E8449';
 
     const domainTitle = new Paragraph({
         children: [new TextRun({ text: `📊 ${domainName}`, bold: true, size: 26, color: '1F4E79' })],
@@ -183,10 +183,10 @@ function buildRiskDomainBlock(domainName, riskCounts, totalInSector, avgScore, r
 
     const riskSummary = new Paragraph({
         children: [
-            new TextRun({ text: `Índice Médio do Setor: `, size: 20 }),
+            new TextRun({ text: `Índice Médio (${typeLabel}): `, size: 20 }),
             new TextRun({ text: `${avgScore.toFixed(1)}`, bold: true, size: 20 }),
             new TextRun({ text: `   |   Nível de Risco: `, size: 20 }),
-            new TextRun({ text: riskLevel, bold: true, size: 20, color: riskColor }),
+            new TextRun({ text: riskLevel, bold: true, size: 20, color: riskColor.replace('#','') }),
             new TextRun({ text: `   |   Alto: ${riskCounts.Alto}p  Médio: ${riskCounts.Médio}p  Baixo: ${riskCounts.Baixo}p`, size: 18, color: '595959' }),
         ],
         spacing: { after: 60 },
@@ -209,6 +209,60 @@ function buildRiskDomainBlock(domainName, riskCounts, totalInSector, avgScore, r
     return [domainTitle, riskSummary, riskImagePara];
 }
 
+function buildSectorTable(sectorBreakdown) {
+    if (!sectorBreakdown || sectorBreakdown.length === 0) return [];
+    
+    sectorBreakdown.sort((a, b) => a.sector.localeCompare(b.sector));
+
+    const rows = [
+        new TableRow({
+            children: [
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Setor', bold: true, color: 'FFFFFF' })], alignment: AlignmentType.CENTER })], shading: { fill: '1F4E79' } }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Índice Médio', bold: true, color: 'FFFFFF' })], alignment: AlignmentType.CENTER })], shading: { fill: '1F4E79' } }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Nível de Risco', bold: true, color: 'FFFFFF' })], alignment: AlignmentType.CENTER })], shading: { fill: '1F4E79' } }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: 'Respondentes', bold: true, color: 'FFFFFF' })], alignment: AlignmentType.CENTER })], shading: { fill: '1F4E79' } }),
+            ],
+            tableHeader: true,
+        })
+    ];
+
+    for (const s of sectorBreakdown) {
+        const riskColor = s.riskLevel === 'Alto' ? 'C0392B' : s.riskLevel === 'Médio' ? 'D68910' : '1E8449';
+        
+        rows.push(new TableRow({
+            children: [
+                new TableCell({ children: [new Paragraph({ text: s.sector })] }),
+                new TableCell({ children: [new Paragraph({ text: s.avgScore.toFixed(1), alignment: AlignmentType.CENTER })] }),
+                new TableCell({ children: [new Paragraph({ children: [new TextRun({ text: s.riskLevel, bold: true, color: riskColor })], alignment: AlignmentType.CENTER })] }),
+                new TableCell({ children: [new Paragraph({ text: `${s.n}`, alignment: AlignmentType.CENTER })] }),
+            ]
+        }));
+    }
+
+    const table = new Table({
+        rows: rows,
+        width: { size: 100, type: WidthType.PERCENTAGE },
+        borders: {
+            top: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+            bottom: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+            left: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+            right: { style: BorderStyle.SINGLE, size: 1, color: "BFBFBF" },
+            insideHorizontal: { style: BorderStyle.SINGLE, size: 1, color: "EFEFEF" },
+            insideVertical: { style: BorderStyle.SINGLE, size: 1, color: "EFEFEF" },
+        },
+    });
+
+    return [
+        new Paragraph({
+             children: [new TextRun({ text: 'Detalhamento por Setor:', bold: true, size: 20, color: '2E4057' })],
+             spacing: { before: 80, after: 80 },
+             keepNext: true,
+        }),
+        table,
+        new Paragraph({ spacing: { after: 200 } })
+    ];
+}
+
 export async function generateGeneralAnalyticalReport(evaluations, companyName) {
     const copsoqEvals = evaluations.filter(ev => ev.type === 'COPSOQ' && ev.responses);
 
@@ -219,28 +273,66 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
 
     const totalRespondents = copsoqEvals.length;
 
-    // ── 1. Agrupar avaliações por setor ───────────────────────────────────────
+    // ── 1. Agrupar avaliações por setor para a tabela ─────────────────────────
     const sectorMap = {};
     copsoqEvals.forEach(ev => {
         const sector = (ev.person?.sector || 'Setor não informado').trim();
         if (!sectorMap[sector]) sectorMap[sector] = [];
         sectorMap[sector].push(ev);
     });
+    const sectorNames = Object.keys(sectorMap).sort();
 
-    // ── 2. Processar dados por setor ──────────────────────────────────────────
-    const sectorsData = [];
+    // ── 2. Processar dados por Domínio (Visão Global) ─────────────────────────
+    const domainsData = [];
 
-    for (const [sectorName, sectorEvals] of Object.entries(sectorMap)) {
-        const n = sectorEvals.length;
-        const domains = [];
+    for (const dom of DOMAIN_MAP) {
+        // A) Risco GLOBAL do domínio
+        const globalRiskCounts = { Alto: 0, Médio: 0, Baixo: 0 };
+        let globalDomainScoreSum = 0;
+        let globalDomainScoreCount = 0;
 
-        for (const dom of DOMAIN_MAP) {
-            // Calcular índice médio por pessoa e classificar risco
-            const riskCounts = { Alto: 0, Médio: 0, Baixo: 0 };
-            let domainScoreSum = 0;
-            let domainScoreCount = 0;
+        copsoqEvals.forEach(ev => {
+            const personScores = dom.qs.map(qId => {
+                const resp = ev.responses[qId];
+                if (resp !== undefined && resp !== null) {
+                    const val = parseInt(resp, 10);
+                    if (!isNaN(val) && val >= 1 && val <= 5) return responseToIndex(val);
+                }
+                return null;
+            }).filter(s => s !== null);
 
-            sectorEvals.forEach(ev => {
+            if (personScores.length > 0) {
+                const personAvg = personScores.reduce((a, b) => a + b, 0) / personScores.length;
+                globalDomainScoreSum += personAvg;
+                globalDomainScoreCount++;
+                globalRiskCounts[getRiskLevel(personAvg)]++;
+            }
+        });
+
+        const globalAvgScore = globalDomainScoreCount > 0 ? globalDomainScoreSum / globalDomainScoreCount : 0;
+
+        const riskLabels = [], riskData = [], riskColors = [];
+        ['Alto', 'Médio', 'Baixo'].forEach(level => {
+            if (globalRiskCounts[level] > 0) {
+                riskLabels.push(`${level} (${globalRiskCounts[level]}p)`);
+                riskData.push(globalRiskCounts[level]);
+                riskColors.push(RISK_COLORS[level]);
+            }
+        });
+
+        const totalGlobalRespondents = globalRiskCounts.Alto + globalRiskCounts.Médio + globalRiskCounts.Baixo;
+        const globalRiskChartImage = totalGlobalRespondents > 0
+            ? await renderPieChart(riskLabels, riskData, riskColors, totalGlobalRespondents)
+            : null;
+
+        // B) Risco POR SETOR (Para a tabela)
+        const sectorBreakdown = [];
+        for (const sector of sectorNames) {
+            const evals = sectorMap[sector];
+            let sectDomainSum = 0;
+            let sectDomainCount = 0;
+
+            evals.forEach(ev => {
                 const personScores = dom.qs.map(qId => {
                     const resp = ev.responses[qId];
                     if (resp !== undefined && resp !== null) {
@@ -252,69 +344,65 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
 
                 if (personScores.length > 0) {
                     const personAvg = personScores.reduce((a, b) => a + b, 0) / personScores.length;
-                    domainScoreSum += personAvg;
-                    domainScoreCount++;
-                    riskCounts[getRiskLevel(personAvg)]++;
+                    sectDomainSum += personAvg;
+                    sectDomainCount++;
                 }
             });
 
-            const avgScore = domainScoreCount > 0 ? domainScoreSum / domainScoreCount : 0;
-
-            // Gráfico Nível 1: pizza tricolor de risco
-            const riskLabels = [], riskData = [], riskColors = [];
-            ['Alto', 'Médio', 'Baixo'].forEach(level => {
-                if (riskCounts[level] > 0) {
-                    riskLabels.push(`${level} (${riskCounts[level]}p)`);
-                    riskData.push(riskCounts[level]);
-                    riskColors.push(RISK_COLORS[level]);
-                }
-            });
-
-            const totalRiskRespondents = riskCounts.Alto + riskCounts.Médio + riskCounts.Baixo;
-            const riskChartImage = totalRiskRespondents > 0
-                ? await renderPieChart(riskLabels, riskData, riskColors, totalRiskRespondents)
-                : null;
-
-            // Gráfico Nível 2: frequência por pergunta (filtrado pelo setor)
-            const questions = [];
-            for (const qId of dom.qs) {
-                const qDef = COPSOQ_QUESTIONS.find(q => q.id === qId);
-                const qText = qDef ? qDef.text : `Pergunta ${qId}`;
-                const counts = [0, 0, 0, 0, 0];
-                let respondentsForQ = 0;
-
-                sectorEvals.forEach(ev => {
-                    const resp = ev.responses[qId];
-                    if (resp !== undefined && resp !== null) {
-                        const val = parseInt(resp, 10);
-                        if (!isNaN(val) && val >= 1 && val <= 5) {
-                            counts[val - 1]++;
-                            respondentsForQ++;
-                        }
-                    }
+            if (sectDomainCount > 0) {
+                const sectAvg = sectDomainSum / sectDomainCount;
+                sectorBreakdown.push({
+                    sector,
+                    n: sectDomainCount,
+                    avgScore: sectAvg,
+                    riskLevel: getRiskLevel(sectAvg)
                 });
-
-                if (respondentsForQ > 0) {
-                    const labels = [], data = [], colors = [];
-                    for (let i = 0; i < 5; i++) {
-                        if (counts[i] > 0) {
-                            labels.push(OPTIONS[i].label);
-                            data.push(counts[i]);
-                            colors.push(OPTIONS[i].color);
-                        }
-                    }
-                    const chartImage = await renderPieChart(labels, data, colors, respondentsForQ);
-                    questions.push({ id: qId, text: qText, respondents: respondentsForQ, chartImage });
-                }
-            }
-
-            if (totalRiskRespondents > 0 || questions.length > 0) {
-                domains.push({ nome: dom.nome, avgScore, riskCounts, riskChartImage, questions });
             }
         }
 
-        if (domains.length > 0) {
-            sectorsData.push({ name: sectorName, n, domains });
+        // C) Gráficos de Perguntas (GLOBAL)
+        const questions = [];
+        for (const qId of dom.qs) {
+            const qDef = COPSOQ_QUESTIONS.find(q => q.id === qId);
+            const qText = qDef ? qDef.text : `Pergunta ${qId}`;
+            const counts = [0, 0, 0, 0, 0];
+            let respondentsForQ = 0;
+
+            copsoqEvals.forEach(ev => {
+                const resp = ev.responses[qId];
+                if (resp !== undefined && resp !== null) {
+                    const val = parseInt(resp, 10);
+                    if (!isNaN(val) && val >= 1 && val <= 5) {
+                        counts[val - 1]++;
+                        respondentsForQ++;
+                    }
+                }
+            });
+
+            if (respondentsForQ > 0) {
+                const labels = [], data = [], colors = [];
+                for (let i = 0; i < 5; i++) {
+                    if (counts[i] > 0) {
+                        labels.push(OPTIONS[i].label);
+                        data.push(counts[i]);
+                        colors.push(OPTIONS[i].color);
+                    }
+                }
+                const chartImage = await renderPieChart(labels, data, colors, respondentsForQ);
+                questions.push({ id: qId, text: qText, respondents: respondentsForQ, chartImage });
+            }
+        }
+
+        if (totalGlobalRespondents > 0 || questions.length > 0) {
+            domainsData.push({
+                nome: dom.nome,
+                avgScore: globalAvgScore,
+                riskCounts: globalRiskCounts,
+                totalRespondents: totalGlobalRespondents,
+                riskChartImage: globalRiskChartImage,
+                sectorBreakdown,
+                questions
+            });
         }
     }
 
@@ -324,7 +412,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
     // Capa
     docChildren.push(
         new Paragraph({
-            children: [new TextRun({ text: 'Relatório Analítico Geral por Setor', bold: true, size: 40, color: '1F4E79' })],
+            children: [new TextRun({ text: 'Relatório Analítico Consolidado', bold: true, size: 40, color: '1F4E79' })],
             alignment: AlignmentType.CENTER,
             spacing: { before: 480, after: 200 },
         }),
@@ -339,44 +427,41 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
             spacing: { after: 100 },
         }),
         new Paragraph({
-            children: [new TextRun({ text: `Setores avaliados: ${sectorsData.length}`, size: 22, color: '595959' })],
+            children: [new TextRun({ text: `Detalhamento Global da Empresa e Tabela de Risco por Setor`, size: 22, color: '595959', italics: true })],
             alignment: AlignmentType.CENTER,
             spacing: { after: 800 },
-        }),
+        })
     );
 
-    for (const sector of sectorsData) {
-        // Quebra de página antes de cada setor (exceto o primeiro)
-        if (docChildren.length > 4) {
-            docChildren.push(new Paragraph({ children: [new PageBreak()] }));
+    for (const dom of domainsData) {
+        // Quebra de página antes de cada domínio
+        docChildren.push(new Paragraph({ children: [new PageBreak()] }));
+
+        // Nível 1: Cabeçalho do Domínio + Gráfico Global
+        if (dom.riskChartImage) {
+            const riskBlocks = buildRiskDomainBlock(
+                dom.nome, dom.riskCounts,
+                dom.totalRespondents,
+                dom.avgScore,
+                dom.riskChartImage,
+                "Global"
+            );
+            docChildren.push(...riskBlocks);
         }
 
-        // Cabeçalho do setor
-        docChildren.push(
-            new Paragraph({
-                children: [new TextRun({ text: `SETOR: ${sector.name.toUpperCase()}`, bold: true, size: 36, color: '1B4D3E' })],
-                spacing: { before: 200, after: 80 },
+        // Nível 2: Tabela de Setores comparativa
+        if (dom.sectorBreakdown && dom.sectorBreakdown.length > 0) {
+            const tableBlocks = buildSectorTable(dom.sectorBreakdown);
+            docChildren.push(...tableBlocks);
+        }
+
+        // Nível 3: Gráficos Globais das Perguntas
+        if (dom.questions.length > 0) {
+            docChildren.push(new Paragraph({
+                children: [new TextRun({ text: `Distribuição das Respostas nas Perguntas:`, bold: true, size: 22, color: '1F4E79' })],
+                spacing: { before: 160, after: 40 },
                 keepNext: true,
-            }),
-            new Paragraph({
-                children: [new TextRun({ text: `N = ${sector.n} respondente${sector.n !== 1 ? 's' : ''}`, size: 22, color: '7F7F7F', italics: true })],
-                spacing: { after: 300 },
-            }),
-        );
-
-        for (const dom of sector.domains) {
-            // Nível 1: cabeçalho do domínio + gráfico de risco
-            if (dom.riskChartImage) {
-                const riskBlocks = buildRiskDomainBlock(
-                    dom.nome, dom.riskCounts,
-                    dom.riskCounts.Alto + dom.riskCounts.Médio + dom.riskCounts.Baixo,
-                    dom.avgScore,
-                    dom.riskChartImage
-                );
-                docChildren.push(...riskBlocks);
-            }
-
-            // Nível 2: perguntas do domínio filtradas pelo setor
+            }));
             for (const q of dom.questions) {
                 docChildren.push(...buildQuestionBlock(q));
             }
@@ -399,7 +484,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
                     children: [
                         new Paragraph({
                             alignment: AlignmentType.RIGHT,
-                            children: [new TextRun({ text: 'Relatório Geral — Normalizze', size: 18, color: '7F8C8D' })]
+                            children: [new TextRun({ text: 'Relatório Geral Consolidado — Normalizze', size: 18, color: '7F8C8D' })]
                         })
                     ]
                 })
@@ -425,5 +510,5 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
 
     const blob = await Packer.toBlob(doc);
     const safeName = (companyName || 'Empresa').replace(/\s+/g, '_').replace(/[^a-zA-Z0-9_\-]/g, '');
-    saveAs(blob, `Relatorio_Geral_${safeName}_${Date.now()}.docx`);
+    saveAs(blob, `Relatorio_Geral_Consolidado_${safeName}_${Date.now()}.docx`);
 }
