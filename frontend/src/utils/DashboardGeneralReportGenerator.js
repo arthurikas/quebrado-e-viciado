@@ -332,10 +332,17 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
     let sumAge = 0, countAge = 0, minAge = 999, maxAge = 0;
     let sumTime = 0, countTime = 0, minTime = 999, maxTime = 0;
 
+    const normalizeSector = (s) => {
+        if (!s) return 'Setor não informado';
+        const t = s.trim();
+        if (!t) return 'Setor não informado';
+        return t.charAt(0).toUpperCase() + t.slice(1).toLowerCase();
+    };
+
     // ── 1. Agrupar avaliações por setor para a tabela ─────────────────────────
     const sectorMap = {};
     copsoqEvals.forEach(ev => {
-        const sector = (ev.person?.sector || 'Setor não informado').trim();
+        const sector = normalizeSector(ev.person?.sector);
         if (!sectorMap[sector]) sectorMap[sector] = [];
         sectorMap[sector].push(ev);
 
