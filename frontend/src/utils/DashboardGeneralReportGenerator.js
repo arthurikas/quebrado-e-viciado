@@ -133,6 +133,60 @@ async function renderPieChart(labels, data, colors, total) {
     });
 }
 
+async function renderHorizontalBarChart(labels, data) {
+    return new Promise((resolve) => {
+        const canvas = document.createElement('canvas');
+        canvas.width = 800;
+        canvas.height = 350;
+        const ctx = canvas.getContext('2d');
+
+        const chart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels,
+                datasets: [{
+                    data,
+                    backgroundColor: '#3D3D3D',
+                    barThickness: 24,
+                }]
+            },
+            options: {
+                animation: false,
+                responsive: false,
+                indexAxis: 'y',
+                scales: {
+                    x: {
+                        min: 0,
+                        max: 90,
+                        ticks: {
+                            stepSize: 30,
+                            font: { size: 18, family: 'Arial', weight: 'bold' },
+                            color: '#000'
+                        },
+                        grid: { color: '#E0E0E0' }
+                    },
+                    y: {
+                        ticks: {
+                            font: { size: 18, family: 'Arial', weight: 'bold' },
+                            color: '#000'
+                        },
+                        grid: { display: false }
+                    }
+                },
+                plugins: {
+                    legend: { display: false }
+                }
+            }
+        });
+
+        setTimeout(() => {
+            const base64 = canvas.toDataURL('image/png');
+            chart.destroy();
+            resolve(base64);
+        }, 120);
+    });
+}
+
 function b64ToBytes(base64) {
     const clean = base64.split(',')[1];
     const binary = window.atob(clean);
@@ -447,7 +501,37 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
     // ── 3. Construir documento DOCX ───────────────────────────────────────────
     const docChildren = [];
 
-    const introBlocks = buildTechnicalReportIntro(companyName, demographicData, domainsData, sectorMap);
+    const getDomainScore = (nomeBusca) => {
+        const d = domainsData.find(dm => dm.nome.toLowerCase().includes(nomeBusca.toLowerCase()));
+        return d ? d.avgScore : 0;
+    };
+    
+    const hBarLabels = [
+        "Exigências Quantitativas",
+        "Ritmo de Trabalho",
+        "Exigências Emocionais",
+        "Influência no Trabalho",
+        "Previsibilidade",
+        "Reconhecimento",
+        "Apoio Social",
+        "Qualidade da Liderança"
+    ];
+    
+    const hBarData = hBarLabels.map(l => {
+        if (l === "Exigências Quantitativas") return getDomainScore("Demandas Quantitativas");
+        if (l === "Ritmo de Trabalho") return getDomainScore("Cognitivas");
+        if (l === "Exigências Emocionais") return getDomainScore("Emocionais");
+        if (l === "Apoio Social") {
+            const d1 = getDomainScore("Chefia");
+            const d2 = getDomainScore("Colegas");
+            return (d1 + d2) / ((d1>0?1:0) + (d2>0?1:0) || 1);
+        }
+        return getDomainScore(l);
+    });
+    
+    const globalBarChartImage = await renderHorizontalBarChart(hBarLabels, hBarData);
+
+    const introBlocks = buildTechnicalReportIntro(companyName, demographicData, domainsData, sectorMap, globalBarChartImage);
     docChildren.push(...introBlocks);
 
     docChildren.push(new Paragraph({ children: [new PageBreak()] }));

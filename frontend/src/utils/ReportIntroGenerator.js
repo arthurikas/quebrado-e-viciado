@@ -1,6 +1,14 @@
-import { Paragraph, TextRun, AlignmentType, PageBreak, Table, TableRow, TableCell, WidthType, BorderStyle } from 'docx';
+import { Paragraph, TextRun, AlignmentType, PageBreak, Table, TableRow, TableCell, WidthType, BorderStyle, ImageRun } from 'docx';
 
-export function buildTechnicalReportIntro(companyName, demographicData, domainsData, sectorMap) {
+function b64ToBytes(base64) {
+    const clean = base64.split(',')[1];
+    const binary = window.atob(clean);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes;
+}
+
+export function buildTechnicalReportIntro(companyName, demographicData, domainsData, sectorMap, globalBarChartImage) {
     const blocks = [];
 
     const P = (runs, o = {}) => {
@@ -168,15 +176,19 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     P([T('8. ANÁLISE GLOBAL DOS RESULTADOS', true)], { s: 28, before: 360, after: 160 });
     P([T('A integração dos dados obtidos em todos os domínios psicossociais avaliados permite uma visão sistêmica dos fatores de risco presentes na organização. Esta análise global é fundamental para identificar relações causais entre diferentes aspectos do ambiente laboral e estabelecer prioridades para as intervenções necessárias.')]);
 
-    P([T('Exigências Quantitativas -')]);
-    P([T('Ritmo de Trabalho -')]);
-    P([T('Exigências Emocionais -')]);
-    P([T('Influência no Trabalho -')]);
-    P([T('Previsibilidade -')]);
-    P([T('Reconhecimento -')]);
-    P([T('Apoio Social -')]);
-    P([T('Qualidade da Liderança -')]);
-    P([T('0  30  60  90')]);
+    if (globalBarChartImage) {
+        blocks.push(new Paragraph({
+            children: [
+                new ImageRun({
+                    data: b64ToBytes(globalBarChartImage),
+                    transformation: { width: 600, height: 260 },
+                    type: 'png',
+                })
+            ],
+            alignment: AlignmentType.CENTER,
+            spacing: { before: 240, after: 240 },
+        }));
+    }
 
     P([T('A análise geral dos resultados demonstra que os principais fatores de risco psicossocial estão concentrados em três domínios prioritários:')], { before: 240, after: 240 });
 
