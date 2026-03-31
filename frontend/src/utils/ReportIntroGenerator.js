@@ -143,12 +143,26 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
 
     for (const d of domainsData) {
         const riskLevelStr = d.avgScore >= 75 ? 'Baixo' : d.avgScore >= 50 ? 'Médio' : 'Alto';
+        
+        const total = d.nRespondents || 1;
+        const pctA = Math.round((d.pAlto / total) * 100);
+        const pctM = Math.round((d.pMedio / total) * 100);
+        const pctB = Math.round((d.pBaixo / total) * 100);
+
+        let obs = "";
+        if (pctA === 100) obs = "Cenário de alerta máximo: 100% da amostra encontra-se em Alto Risco.";
+        else if (pctB === 100) obs = "Cenário excelente: 100% da amostra encontra-se em zona de segurança (Baixo Risco).";
+        else if (pctA >= 50) obs = `Atenção crítica: a maioria (${pctA}%) manifesta Alto Risco. O Risco Médio abrange ${pctM}% e apenas ${pctB}% relatam Baixo Risco.`;
+        else if (pctB >= 50) obs = `Cenário majoritariamente positivo, com ${pctB}% em Baixo Risco. No entanto, o Alto Risco afeta ${pctA}% e o Risco Médio ${pctM}%.`;
+        else if (pctM >= 50) obs = `Predominância de Risco Médio (${pctM}%), exigindo monitoramento preventivo. O Alto Risco afeta ${pctA}% dos respondentes.`;
+        else obs = `Distribuição da amostra: ${pctA}% em Alto Risco, ${pctM}% em Médio e ${pctB}% em Baixo Risco.`;
+
         tableRows.push(new TableRow({
             children: [
                 new TableCell({ children: [new Paragraph({ text: d.nome })] }),
                 new TableCell({ children: [new Paragraph({ text: d.avgScore.toFixed(1) })] }),
                 new TableCell({ children: [new Paragraph({ text: riskLevelStr })] }),
-                new TableCell({ children: [new Paragraph({ text: `[Observações relevantes sobre este domínio]` })] }),
+                new TableCell({ children: [new Paragraph({ text: obs })] }),
             ]
         }));
     }
