@@ -358,7 +358,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
                 if (a > maxAge) maxAge = a;
             }
 
-            const t = Number(ev.person.timeInCompany);
+            const t = Number(ev.person.tenure);
             if (!isNaN(t) && t >= 0) {
                 sumTime += t; countTime++;
                 if (t < minTime) minTime = t;
