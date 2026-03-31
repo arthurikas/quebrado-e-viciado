@@ -1,7 +1,7 @@
 import {
     Document, Packer, Paragraph, TextRun, ImageRun,
     Header, Footer, AlignmentType, PageNumber, PageBreak,
-    WidthType, Table, TableRow, TableCell, BorderStyle
+    WidthType, Table, TableRow, TableCell, BorderStyle, VerticalAlign
 } from 'docx';
 import { saveAs } from 'file-saver';
 import { Chart, registerables } from 'chart.js';
@@ -318,15 +318,26 @@ function buildSectorTable(sectorBreakdown) {
     ];
 }
 
-export async function generateGeneralAnalyticalReport(evaluations, companyName) {
-    const copsoqEvals = evaluations.filter(ev => ev.type === 'COPSOQ' && ev.responses);
+export async function generateGeneralAnalyticalReport(companyName, copsoqEvals = []) {
+    if (!copsoqEvals || copsoqEvals.length === 0) return;
+
+    let logoBuffer = null;
+    try {
+        const response = await fetch('/assets/normalizze-logo.png');
+        if (response.ok) {
+            logoBuffer = await response.arrayBuffer();
+        }
+    } catch (e) {
+        console.error("Erro ao carregar logo:", e);
+    }
+
+    const totalRespondents = copsoqEvals.length;
 
     if (copsoqEvals.length === 0) {
         alert('Não há avaliações COPSOQ com respostas para gerar este relatório.');
         return;
     }
 
-    const totalRespondents = copsoqEvals.length;
 
     let countM = 0, countF = 0;
     let sumAge = 0, countAge = 0, minAge = 999, maxAge = 0;
@@ -599,10 +610,54 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
             headers: {
                 default: new Header({
                     children: [
-                        new Paragraph({
-                            alignment: AlignmentType.RIGHT,
-                            children: [new TextRun({ text: 'Relatório Geral Consolidado — Normalizze', size: 18, color: '7F8C8D' })]
-                        })
+                        new Table({
+                            width: { size: 100, type: WidthType.PERCENTAGE },
+                            borders: {
+                                top: { style: BorderStyle.SINGLE, size: 6, color: "111111" },
+                                bottom: { style: BorderStyle.SINGLE, size: 6, color: "111111" },
+                                left: { style: BorderStyle.SINGLE, size: 6, color: "111111" },
+                                right: { style: BorderStyle.SINGLE, size: 6, color: "111111" },
+                                insideVertical: { style: BorderStyle.SINGLE, size: 6, color: "111111" },
+                                insideHorizontal: { style: BorderStyle.NONE, size: 0, color: "FFFFFF" }
+                            },
+                            rows: [
+                                new TableRow({
+                                    children: [
+                                        new TableCell({
+                                            width: { size: 30, type: WidthType.PERCENTAGE },
+                                            verticalAlign: VerticalAlign.CENTER,
+                                            margins: { top: 150, bottom: 150, left: 150, right: 150 },
+                                            children: [
+                                                new Paragraph({
+                                                    alignment: AlignmentType.CENTER,
+                                                    children: logoBuffer ? [
+                                                        new ImageRun({
+                                                            data: logoBuffer,
+                                                            transformation: { width: 140, height: 45 },
+                                                            type: "png"
+                                                        })
+                                                    ] : [
+                                                        new TextRun({ text: "NORMALIZZE", bold: true, size: 24, color: "54A446" })
+                                                    ]
+                                                })
+                                            ]
+                                        }),
+                                        new TableCell({
+                                            width: { size: 70, type: WidthType.PERCENTAGE },
+                                            verticalAlign: VerticalAlign.CENTER,
+                                            margins: { top: 150, bottom: 150, left: 150, right: 150 },
+                                            children: [
+                                                new Paragraph({
+                                                    alignment: AlignmentType.CENTER,
+                                                    children: [new TextRun({ text: "AVALIAÇÃO PSICOSSOCIAL", size: 32, color: "7F8C8D" })]
+                                                })
+                                            ]
+                                        })
+                                    ]
+                                })
+                            ]
+                        }),
+                        new Paragraph({ text: "", spacing: { after: 200 } })
                     ]
                 })
             },
@@ -610,8 +665,11 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
                 default: new Footer({
                     children: [
                         new Paragraph({
+                            border: { top: { color: "CCCCCC", space: 1, style: "single", size: 6 } },
                             alignment: AlignmentType.CENTER,
+                            spacing: { before: 200, after: 100 },
                             children: [
+                                new TextRun({ text: 'Relatório Técnico de Avaliação Psicossocial | ', size: 18, color: '7F8C8D' }),
                                 new TextRun({ text: 'Página ', size: 18, color: '7F8C8D' }),
                                 new TextRun({ children: [PageNumber.CURRENT], size: 18, color: '7F8C8D' }),
                                 new TextRun({ text: ' de ', size: 18, color: '7F8C8D' }),
