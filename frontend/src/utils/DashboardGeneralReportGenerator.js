@@ -214,11 +214,11 @@ function buildQuestionBlock(q) {
         children: [
             new ImageRun({
                 data: b64ToBytes(q.chartImage),
-                transformation: { width: 400, height: 160 },
+                transformation: { width: 360, height: 144 },
                 type: 'png',
             })
         ],
-        spacing: { after: 150 },
+        spacing: { after: 80 },
         keepLines: true,
     });
 
@@ -669,13 +669,14 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
                                 })
                             ]
                         }),
-                        new Paragraph({ text: "", spacing: { after: 200 } })
+                        new Paragraph({ text: "", spacing: { after: 700 } }) // Espaço forçado para não colar o texto no Word/Docs
                     ]
                 })
             },
             footers: {
                 default: new Footer({
                     children: [
+                        new Paragraph({ text: "", spacing: { before: 500 } }), // Espaço forçado para manter o conteúdo afastado do rodapé
                         new Paragraph({
                             border: { top: { color: "CCCCCC", space: 1, style: BorderStyle.SINGLE, size: 6 } },
                             alignment: AlignmentType.CENTER,
