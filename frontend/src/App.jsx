@@ -131,6 +131,7 @@ function AppContent() {
           company_id: ev.company_id,
           gender: ev.employees?.sex || '',
           age: ev.employees?.age || '',
+          tenure: ev.employees?.tenure_years ?? (ev.full_data?.person?.tenure) ?? '',
           date: ev.evaluation_date
         },
         ...ev.full_data // Contains responses and results
@@ -247,6 +248,7 @@ function AppContent() {
           full_name: data.person.name,
           sex: data.person.gender || 'O',
           age: parseInt(data.person.age) || 0,
+          tenure_years: parseFloat(data.person.tenure) || 0,
           job_function: data.person.role || '',
           sector_parish: data.person.sector || '',
           company_id: data.person.company_id || activeCompanyId
@@ -264,6 +266,7 @@ function AppContent() {
           type: 'COPSOQ',
           company_id: data.person.company_id || activeCompanyId,
           full_data: {
+            person: data.person,
             responses: data.responses,
             results: data.results,
             pontuacao_geral: data.pontuacao_geral

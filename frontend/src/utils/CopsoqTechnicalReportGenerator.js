@@ -121,6 +121,8 @@ export function generateCopsoqHtmlReport(results, personData) {
     const address   = personData.address || BLANK;
     const avaliador = personData.avaliador || personData.evaluator || BLANK;
     const registro  = personData.registro || personData.registration || BLANK;
+    // For individual reports, avgTenure is the person's own tenure; for batch reports it's the computed average
+    const avgTenureDisplay = personData.avgTenure || (personData.tenure ? `${personData.tenure} anos` : BLANK);
 
     // Chart generation helper (Radar)
     const abbreviateDomain = (name) => {
@@ -411,7 +413,7 @@ export function generateCopsoqHtmlReport(results, personData) {
             <div class="data-item"><b>Total de Respondentes:</b> ${personData.totalRespondents || BLANK}</div>
             <div class="data-item"><b>Distribuição por Sexo:</b> M: ${personData.sexM || BLANK} &nbsp;|&nbsp; F: ${personData.sexF || BLANK}</div>
             <div class="data-item"><b>Faixa Etária Média:</b> ${personData.avgAge || BLANK}</div>
-            <div class="data-item"><b>Tempo Médio de Empresa:</b> ${personData.avgTenure || BLANK}</div>
+            <div class="data-item"><b>Tempo Médio de Empresa:</b> ${avgTenureDisplay}</div>
             <div class="data-item"><b>Setores Representados:</b> ${sector}</div>
         </div>
     </section>

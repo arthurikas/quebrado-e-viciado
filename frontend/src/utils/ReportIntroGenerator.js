@@ -261,8 +261,6 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     P([T('  o Mudança de gestão')]);
     P([T('  o Aumento expressivo de adoecimentos por transtornos mentais ou absenteísmo por CID F')]);
 
-    blocks.push(new Paragraph({ children: [new PageBreak()] }));
-
     // 12. CONCLUSAO
     P([T('12. CONCLUSÃO', true)], { s: 28, before: 240, after: 160 });
     P([T('Os resultados obtidos com a aplicação do Questionario baseado no COPSOQ II na ')] , { keepNext: true });
