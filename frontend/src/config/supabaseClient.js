@@ -15,10 +15,5 @@ export const supabase = (supabaseUrl && supabaseAnonKey)
         from: () => ({ select: () => ({ eq: () => ({ order: () => ({}) }) }) })
     };
 
-// Data reader client — always uses anon role, never holds authenticated session
-// This bypasses RLS restrictions that block authenticated user reads
-export const supabaseReader = (supabaseUrl && supabaseAnonKey)
-    ? createClient(supabaseUrl, supabaseAnonKey, {
-        auth: { persistSession: false, autoRefreshToken: false }
-    })
-    : supabase;
+// Data reader client removed (A01 Vulnerability - RLS Bypass)
+// All components must use the standard 'supabase' client which respects active sessions.

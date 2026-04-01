@@ -2,7 +2,7 @@ import React, { useState, useRef } from 'react';
 import { AEP_DATA } from '../utils/aep_data_v2';
 import { calculateAepScore } from '../utils/aep_calculations_v2';
 import { useCompany } from '../context/CompanyContext';
-import { supabase, supabaseReader } from '../config/supabaseClient';
+import { supabase } from '../config/supabaseClient';
 import { Camera, X, ImageIcon } from 'lucide-react';
 
 export default function AepForm({ onFinish, onCancel }) {
@@ -41,7 +41,7 @@ export default function AepForm({ onFinish, onCancel }) {
             setCompanyData(companies[0]);
         } else {
             console.log('Fetching fallback company...');
-            supabaseReader
+            supabase
                 .from('empresas')
                 .select('*')
                 .eq('ativo', true)
@@ -78,6 +78,7 @@ export default function AepForm({ onFinish, onCancel }) {
                             value={personData.sector}
                             onChange={e => setPersonData({ ...personData, sector: e.target.value })}
                             placeholder="Ex: Almoxarifado"
+                            maxLength="100"
                             style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                         />
                     </div>
@@ -88,6 +89,7 @@ export default function AepForm({ onFinish, onCancel }) {
                             value={personData.role}
                             onChange={e => setPersonData({ ...personData, role: e.target.value })}
                             placeholder="Ex: Auxiliar"
+                            maxLength="100"
                             style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                         />
                     </div>
@@ -101,7 +103,7 @@ export default function AepForm({ onFinish, onCancel }) {
                             // Silent Fallback: If no company is set, fetch 'Normalizze' or first available
                             if (!currentCompanyId) {
                                 try {
-                                    let { data } = await supabaseReader
+                                    let { data } = await supabase
                                         .from('empresas')
                                         .select('*')
                                         .ilike('nome', '%Normalizze%')
@@ -109,7 +111,7 @@ export default function AepForm({ onFinish, onCancel }) {
                                         .maybeSingle();
 
                                     if (!data) {
-                                        const { data: anyComp } = await supabaseReader.from('empresas').select('*').limit(1).maybeSingle();
+                                        const { data: anyComp } = await supabase.from('empresas').select('*').limit(1).maybeSingle();
                                         data = anyComp;
                                     }
 

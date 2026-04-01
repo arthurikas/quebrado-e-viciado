@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { supabase, supabaseReader } from '../config/supabaseClient';
+import { supabase } from '../config/supabaseClient';
 import { useCompany } from '../context/CompanyContext';
 import { Building2, Users, TrendingUp, List } from 'lucide-react';
 
@@ -22,7 +22,7 @@ export default function AdminDashboard({ onNavigate }) {
         try {
             setLoading(true);
             // Buscar empresas com contagem de avaliações (dados reais persistidos)
-            const { data: empresasData, error: empresasError } = await supabaseReader
+            const { data: empresasData, error: empresasError } = await supabase
                 .from('empresas')
                 .select(`
                     *,
@@ -34,7 +34,7 @@ export default function AdminDashboard({ onNavigate }) {
             setEmpresas(empresasData || []);
 
             // Estatísticas rápidas - Total de avaliações no sistema
-            const { count: totalAvaliacoes, error: countError } = await supabaseReader
+            const { count: totalAvaliacoes, error: countError } = await supabase
                 .from('evaluations')
                 .select('*', { count: 'exact', head: true });
 

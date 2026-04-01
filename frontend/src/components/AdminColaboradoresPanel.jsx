@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { supabase, supabaseReader } from '../config/supabaseClient';
+import { supabase } from '../config/supabaseClient';
 import { generateTemporaryPassword } from '../utils/passwordGenerator';
 import { useAuth } from '../context/AuthContext';
 import { Users, Plus, Edit2, Key, CheckCircle, XCircle, Copy, UserCog, Trash2 } from 'lucide-react';
@@ -155,7 +155,7 @@ export default function AdminColaboradoresPanel() {
         try {
             if (!silent) setLoading(true);
 
-            const { data, error } = await supabaseReader
+            const { data, error } = await supabase
                 .from('perfis')
                 .select('*')
                 .neq('id', profile?.id)

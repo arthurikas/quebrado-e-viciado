@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
-import { supabase, supabaseReader } from '../config/supabaseClient';
+import { supabase } from '../config/supabaseClient';
 
 const AuthContext = createContext();
 
@@ -55,7 +55,7 @@ export const AuthProvider = ({ children }) => {
     }, []);
 
     const fetchProfile = async (userId) => {
-        const { data, error } = await supabaseReader
+        const { data, error } = await supabase
             .from('perfis')
             .select('*')
             .eq('id', userId)

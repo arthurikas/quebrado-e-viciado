@@ -3,7 +3,7 @@ import { COPSOQ_QUESTIONS, COPSOQ_DOMAINS } from '../utils/copsoq_data';
 import { calcularResultadosCopsoq } from '../utils/copsoq_calculations';
 import { useAuth } from '../context/AuthContext';
 import { useCompany } from '../context/CompanyContext';
-import { supabaseReader } from '../config/supabaseClient';
+import { supabase } from '../config/supabaseClient';
 import { Save, ChevronRight, ChevronLeft, Send, AlertCircle } from 'lucide-react';
 
 const CopsoqForm = ({ onFinish, onCancel }) => {
@@ -42,7 +42,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                 setIsLoadingCompany(true);
                 try {
                     console.log("Validating hash string:", hash);
-                    const { data, error } = await supabaseReader
+                    const { data, error } = await supabase
                         .from('empresas')
                         .select('id, nome, ativo')
                         .eq('hash_link', hash)
@@ -200,6 +200,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                                 value={personData.name}
                                 onChange={e => setPersonData({ ...personData, name: e.target.value })}
                                 placeholder="Seu nome completo"
+                                maxLength="100"
                                 style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                             />
                         </div>
@@ -215,6 +216,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                                 value={personData.sector}
                                 onChange={e => setPersonData({ ...personData, sector: e.target.value })}
                                 placeholder="Ex: Produção"
+                                maxLength="100"
                                 style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                             />
                         </div>
@@ -226,6 +228,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                                 value={personData.role}
                                 onChange={e => setPersonData({ ...personData, role: e.target.value })}
                                 placeholder="Ex: Operador"
+                                maxLength="100"
                                 style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                             />
                         </div>
@@ -257,6 +260,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                                 value={personData.age}
                                 onChange={e => setPersonData({ ...personData, age: e.target.value })}
                                 placeholder="Idade"
+                                min="14" max="150"
                                 style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                             />
                         </div>
@@ -275,6 +279,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                                 setPersonData({ ...personData, tenure: val });
                             }}
                             placeholder="Ex: 8 ou 2.5"
+                            min="0" max="100"
                             style={{ width: '100%', padding: '0.75rem', borderRadius: '4px', border: '1px solid #ccc' }}
                         />
                         <p style={{ fontSize: '0.75rem', color: '#888', marginTop: '0.25rem' }}>
