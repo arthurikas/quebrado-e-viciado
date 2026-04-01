@@ -144,10 +144,10 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     for (const d of domainsData) {
         const riskLevelStr = d.avgScore >= 75 ? 'Baixo' : d.avgScore >= 50 ? 'Médio' : 'Alto';
         
-        const total = d.nRespondents || 1;
-        const pctA = Math.round((d.pAlto / total) * 100);
-        const pctM = Math.round((d.pMedio / total) * 100);
-        const pctB = Math.round((d.pBaixo / total) * 100);
+        const total = d.totalRespondents || 1;
+        const pctA = Math.round(((d.riskCounts?.Alto || 0) / total) * 100);
+        const pctM = Math.round(((d.riskCounts?.Médio || 0) / total) * 100);
+        const pctB = Math.round(((d.riskCounts?.Baixo || 0) / total) * 100);
 
         let obs = "";
         if (pctA === 100) obs = "Cenário de alerta máximo: 100% da amostra encontra-se em Alto Risco.";
