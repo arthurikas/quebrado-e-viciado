@@ -318,14 +318,26 @@ function buildSectorTable(sectorBreakdown) {
     ];
 }
 
-export async function generateGeneralAnalyticalReport(companyName, copsoqEvals = []) {
-    if (!copsoqEvals || copsoqEvals.length === 0) return;
+export async function generateGeneralAnalyticalReport(evaluations, companyName) {
+    if (!evaluations || evaluations.length === 0) return;
+    const copsoqEvals = evaluations.filter(ev => ev.type === 'COPSOQ' && ev.responses);
+    if (!copsoqEvals || copsoqEvals.length === 0) {
+        alert('Não há avaliações COPSOQ com respostas para gerar este relatório.');
+        return;
+    }
 
     let logoBuffer = null;
     try {
         const response = await fetch('/assets/normalizze-logo.png');
         if (response.ok) {
-            logoBuffer = await response.arrayBuffer();
+            const buffer = await response.arrayBuffer();
+            const view = new Uint8Array(buffer);
+            // Verifica assinatura do PNG para evitar crash se o servidor retornar HTML (fallback)
+            if (view.length > 8 && view[0] === 137 && view[1] === 80 && view[2] === 78 && view[3] === 71) {
+                logoBuffer = buffer;
+            } else {
+                console.warn("Logo invalido ou nao encontrado (fallback HTML suspeito).");
+            }
         }
     } catch (e) {
         console.error("Erro ao carregar logo:", e);
@@ -665,7 +677,7 @@ export async function generateGeneralAnalyticalReport(companyName, copsoqEvals =
                 default: new Footer({
                     children: [
                         new Paragraph({
-                            border: { top: { color: "CCCCCC", space: 1, style: "single", size: 6 } },
+                            border: { top: { color: "CCCCCC", space: 1, style: BorderStyle.SINGLE, size: 6 } },
                             alignment: AlignmentType.CENTER,
                             spacing: { before: 200, after: 100 },
                             children: [
