@@ -214,11 +214,11 @@ function buildQuestionBlock(q) {
         children: [
             new ImageRun({
                 data: b64ToBytes(q.chartImage),
-                transformation: { width: 450, height: 180 },
+                transformation: { width: 400, height: 160 },
                 type: 'png',
             })
         ],
-        spacing: { after: 200 },
+        spacing: { after: 150 },
         keepLines: true,
     });
 
@@ -574,8 +574,8 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
     );
 
     for (const dom of domainsData) {
-        // Quebra de página antes de cada domínio
-        docChildren.push(new Paragraph({ children: [new PageBreak()] }));
+        // Substituído PageBreak fixo por espaçamento natural para otimizar páginas
+        docChildren.push(new Paragraph({ spacing: { before: 400 } }));
 
         // Nível 1: Cabeçalho do Domínio + Gráfico Global
         if (dom.riskChartImage) {
@@ -617,7 +617,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
         },
         sections: [{
             properties: {
-                page: { margin: { top: 1134, right: 1134, bottom: 1134, left: 1134 } }
+                page: { margin: { top: 1800, right: 1134, bottom: 1800, left: 1134 } }
             },
             headers: {
                 default: new Header({
