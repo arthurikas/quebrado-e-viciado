@@ -115,7 +115,7 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     P([T('Total de Respondentes: ', true), T(`${demographicData.totalRespondents} (100% da amostra coletada)`)]);
     P([T('Distribuição por Sexo: ', true), T(`Masculino: ${demographicData.pctM}% | Feminino: ${demographicData.pctF}%`)]);
     P([T('Faixa Etária Média: ', true), T(`${demographicData.avgAge || 0} anos (variando de ${demographicData.minAge || 0} a ${demographicData.maxAge || 0} anos)`)]);
-    P([T('Tempo Médio de Empresa: ', true), T(`${demographicData.avgTime || 0} anos (variando de ${demographicData.minTime || 0} a ${demographicData.maxTime || 0} anos)`)]);
+    P([T('Tempo Médio de Empresa: ', true), T(demographicData.avgTime > 0 ? `${demographicData.avgTime} anos (variando de ${demographicData.minTime} a ${demographicData.maxTime} anos)` : '— (informado a partir de novas avaliações)')]);
     P([T('Setores Representados: ', true), T(`${sectorPercents.join(', ')}`)]);
 
     // 6. RESULTADOS POR DOMINIO PSICOSSOCIAL
