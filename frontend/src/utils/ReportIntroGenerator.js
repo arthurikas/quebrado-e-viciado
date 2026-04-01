@@ -67,8 +67,6 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     
     P([T('A estruturação metodológica deste relatório visa não apenas documentar os achados da avaliação, mas também fornecer um roteiro prático para a implementação de melhorias, monitoramento continuo e reavaliações periódicas, consolidando um ciclo de melhoria contínua na gestão dos riscos psicossociais organizacionais.')]);
 
-    blocks.push(new Paragraph({ children: [new PageBreak()] }));
-
     // 4. IDENTIFICAÇÃO E SETORES
     const sectorPercents = [];
     for (const [name, arr] of Object.entries(sectorMap)) {
@@ -97,8 +95,6 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     P([T('O profissional responsável pela aplicação e análise do questionario baseado COPSOQ II deve possuir formação específica em áreas relacionadas à saúde e segurança do trabalho, psicologia organizacional ou medicina do trabalho. É fundamental que este profissional tenha conhecimento aprofundado sobre a ferramenta, sua metodologia de aplicação e interpretação dos resultados, para garantir a validade científica e a relevância prática das conclusões apresentadas.')]);
     P([T('A atuação do responsável técnico deve observar rigorosamente os princípios éticos relacionados à confidencialidade dos participantes, à análise imparcial dos dados e à proposição de recomendações baseadas em evidências. Este profissional desempenha papel crucial na condução de todo o processo, desde o planejamento da aplicação até a elaboração do relatório final e acompanhamento das intervenções implementadas.')]);
 
-    blocks.push(new Paragraph({ children: [new PageBreak()] }));
-
     // 5. METODOLOGIA
     P([T('5. METODOLOGIA E PERFIL DOS PARTICIPANTES', true)], { s: 28, before: 240, after: 160 });
     P([T('5.1 Metodologia Utilizada', true)], { s: 24, before: 160, after: 120 });
@@ -121,8 +117,6 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     P([T('Faixa Etária Média: ', true), T(`${demographicData.avgAge || 0} anos (variando de ${demographicData.minAge || 0} a ${demographicData.maxAge || 0} anos)`)]);
     P([T('Tempo Médio de Empresa: ', true), T(`${demographicData.avgTime || 0} anos (variando de ${demographicData.minTime || 0} a ${demographicData.maxTime || 0} anos)`)]);
     P([T('Setores Representados: ', true), T(`${sectorPercents.join(', ')}`)]);
-
-    blocks.push(new Paragraph({ children: [new PageBreak()] }));
 
     // 6. RESULTADOS POR DOMINIO PSICOSSOCIAL
     P([T('6. RESULTADOS POR DOMÍNIO PSICOSSOCIAL', true)], { s: 28, before: 240, after: 160 });
@@ -178,13 +172,6 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     }));
     blocks.push(new Paragraph({ spacing: { after: 300 } }));
 
-    // 7. PERFIL
-    P([T('7. PERFIL DOS PARTICIPANTES', true)], { s: 28, before: 240, after: 160 });
-    P([T('Total de Respondentes: ', true), T(`${demographicData.totalRespondents} `)]);
-    P([T('Distribuição por Sexo: ', true), T(`Masculino: ${demographicData.pctM}% | Feminino: ${demographicData.pctF}%`)]);
-    P([T('Faixa Etária Média: ', true), T(`${demographicData.avgAge || 0} anos (variando de ${demographicData.minAge || 0} a ${demographicData.maxAge || 0} anos)`)]);
-    P([T('Tempo Médio de Empresa: ', true), T(`${demographicData.avgTime || 0} anos (variando de ${demographicData.minTime || 0} a ${demographicData.maxTime || 0} anos)`)]);
-    P([T('Setores Representados: ', true), T(`${sectorPercents.join(', ')}`)]);
 
     // 8. ANALISE GLOBAL
     P([T('8. ANÁLISE GLOBAL DOS RESULTADOS', true)], { s: 28, before: 360, after: 160 });
@@ -215,8 +202,6 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
     ];
 
     priorityList.forEach(item => P([T(item)]));
-
-    blocks.push(new Paragraph({ children: [new PageBreak()] }));
 
     // 9. PADRÕES CROSS
     P([T('9. ADICIONALMENTE, FORAM IDENTIFICADOS PADRÕES RELEVANTES NA ANÁLISE CRUZADA DOS DADOS:', true)], { s: 28, before: 240, after: 160 });

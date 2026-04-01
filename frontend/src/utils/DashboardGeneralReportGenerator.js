@@ -30,7 +30,6 @@ const DOMAIN_MAP = [
     { nome: "Comprometimento com a Empresa",     qs: [50, 51, 52] },
     { nome: "Insegurança no Trabalho",           qs: [53, 54, 55] },
     { nome: "Conflito Trabalho-Família",         qs: [56, 57, 58] },
-    { nome: "Burnout",                           qs: [59, 60, 61] },
     { nome: "Presenteísmo",                      qs: [62, 63, 64] },
 ];
 
@@ -382,7 +381,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
             }
 
             const t = Number(ev.person.tenure);
-            if (!isNaN(t) && t >= 0) {
+            if (!isNaN(t) && t > 0) {
                 sumTime += t; countTime++;
                 if (t < minTime) minTime = t;
                 if (t > maxTime) maxTime = t;

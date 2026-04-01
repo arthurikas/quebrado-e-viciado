@@ -129,9 +129,9 @@ function AppContent() {
           role: ev.employees?.job_function || '',
           sector: ev.employees?.sector_parish || '',
           company_id: ev.company_id,
-          gender: ev.employees?.sex || '',
-          age: ev.employees?.age || '',
-          tenure: ev.employees?.tenure_years ?? (ev.full_data?.person?.tenure) ?? '',
+          gender: ev.employees?.sex || ev.full_data?.person?.gender || '',
+          age: ev.employees?.age || ev.full_data?.person?.age || '',
+          tenure: (ev.employees?.tenure_years ?? parseFloat(ev.full_data?.person?.tenure)) || 0,
           date: ev.evaluation_date
         },
         ...ev.full_data // Contains responses and results
