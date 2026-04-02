@@ -277,36 +277,6 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
                         </select>
                     </div>
 
-                    {/* Setor */}
-                    <div>
-                        <label style={labelStyle}>Setor</label>
-                        <select
-                            style={fieldStyle}
-                            value={pendingFilters.sector}
-                            onChange={e => setPendingFilters({ ...pendingFilters, sector: e.target.value })}
-                        >
-                            <option value="">Todos os Setores</option>
-                            {availableSectors.map(s => (
-                                <option key={s} value={s}>{s}</option>
-                            ))}
-                        </select>
-                    </div>
-
-                    {/* Cargo */}
-                    <div>
-                        <label style={labelStyle}>Cargo</label>
-                        <select
-                            style={fieldStyle}
-                            value={pendingFilters.role}
-                            onChange={e => setPendingFilters({ ...pendingFilters, role: e.target.value })}
-                        >
-                            <option value="">Todos os Cargos</option>
-                            {availableRoles.map(r => (
-                                <option key={r} value={r}>{r}</option>
-                            ))}
-                        </select>
-                    </div>
-
                     {/* Gênero */}
                     <div>
                         <label style={labelStyle}>Gênero</label>
