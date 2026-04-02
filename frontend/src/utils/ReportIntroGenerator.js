@@ -144,12 +144,12 @@ export function buildTechnicalReportIntro(companyName, demographicData, domainsD
         const pctB = Math.round(((d.riskCounts?.Baixo || 0) / total) * 100);
 
         let obs = "";
-        if (pctA === 100) obs = "Cenário de alerta máximo: 100% da amostra encontra-se em Alto Risco.";
-        else if (pctB === 100) obs = "Cenário excelente: 100% da amostra encontra-se em zona de segurança (Baixo Risco).";
-        else if (pctA >= 50) obs = `Atenção crítica: a maioria (${pctA}%) manifesta Alto Risco. O Risco Médio abrange ${pctM}% e apenas ${pctB}% relatam Baixo Risco.`;
-        else if (pctB >= 50) obs = `Cenário majoritariamente positivo, com ${pctB}% em Baixo Risco. No entanto, o Alto Risco afeta ${pctA}% e o Risco Médio ${pctM}%.`;
-        else if (pctM >= 50) obs = `Predominância de Risco Médio (${pctM}%), exigindo monitoramento preventivo. O Alto Risco afeta ${pctA}% dos respondentes.`;
-        else obs = `Distribuição da amostra: ${pctA}% em Alto Risco, ${pctM}% em Médio e ${pctB}% em Baixo Risco.`;
+        if (pctA === 100) obs = "Cenário de alerta máximo: 100% da amostra encontra-se em Risco Psicossocial Elevado.";
+        else if (pctB === 100) obs = "Cenário excelente: 100% da amostra encontra-se em zona de segurança (Condição Satisfatória/Segura).";
+        else if (pctA >= 50) obs = `Atenção crítica: a maioria (${pctA}%) manifesta Risco Psicossocial Elevado. O Risco Psicossocial Moderado abrange ${pctM}% e apenas ${pctB}% relatam Condição Satisfatória/Segura.`;
+        else if (pctB >= 50) obs = `Cenário majoritariamente positivo, com ${pctB}% em Condição Satisfatória/Segura. No entanto, o Risco Psicossocial Elevado afeta ${pctA}% e o Risco Psicossocial Moderado ${pctM}%.`;
+        else if (pctM >= 50) obs = `Predominância de Risco Psicossocial Moderado (${pctM}%), exigindo monitoramento preventivo. O Risco Psicossocial Elevado afeta ${pctA}% dos respondentes.`;
+        else obs = `Distribuição da amostra: ${pctA}% em Risco Psicossocial Elevado, ${pctM}% em Risco Psicossocial Moderado e ${pctB}% em Condição Satisfatória/Segura.`;
 
         tableRows.push(new TableRow({
             children: [

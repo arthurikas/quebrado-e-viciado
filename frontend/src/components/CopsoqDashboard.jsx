@@ -137,16 +137,16 @@ const CopsoqDashboard = ({ results, person, onBack }) => {
                         </ResponsiveContainer>
                     </div>
                     <div style={{ display: 'flex', gap: '1.5rem', marginTop: '0.75rem', fontSize: '0.8rem', flexWrap: 'wrap', justifyContent: 'center' }}>
-                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#E74C3C', borderRadius: 2, marginRight: 4 }} />Alto Risco (0–49)</span>
-                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#F39C12', borderRadius: 2, marginRight: 4 }} />Médio (50–74)</span>
-                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#27AE60', borderRadius: 2, marginRight: 4 }} />Baixo / Favorável (75–100)</span>
+                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#E74C3C', borderRadius: 2, marginRight: 4 }} />Risco Psicossocial Elevado (0–49)</span>
+                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#F39C12', borderRadius: 2, marginRight: 4 }} />Risco Psicossocial Moderado (50–74)</span>
+                        <span><span style={{ display: 'inline-block', width: 12, height: 12, background: '#27AE60', borderRadius: 2, marginRight: 4 }} />Condição Satisfatória/Segura (75–100)</span>
                     </div>
                 </div>
 
                 {/* Critical Issues */}
                 <div className="card">
                     <h3>Áreas de Atenção (Menores Pontuações)</h3>
-                    <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>Domínios com classificação de Alto Risco ou Risco Moderado.</p>
+                    <p style={{ fontSize: '0.9rem', color: '#666', marginBottom: '1rem' }}>Domínios com classificação de Risco Psicossocial Elevado ou Risco Psicossocial Moderado.</p>
 
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                         {sortedByRisk.filter(d => d.score < 75).length === 0 ? (

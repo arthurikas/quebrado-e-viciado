@@ -54,7 +54,7 @@ export async function generateConsolidatedTechnicalReport(evaluations, companyNa
     const domainCharts = {};
     for (const [id, stats] of Object.entries(domainStats)) {
         domainCharts[id] = await generatePieChart(
-            ['Risco Alto (0-49)', 'Risco Médio (50-74)', 'Baixo Risco (75-100)'],
+            ['Risco Psicossocial Elevado (0-49)', 'Risco Psicossocial Moderado (50-74)', 'Condição Satisfatória/Segura (75-100)'],
             [stats.alto, stats.medio, stats.baixo],
             ['#E74C3C', '#F39C12', '#27AE60']
         );
@@ -114,9 +114,9 @@ export async function generateConsolidatedTechnicalReport(evaluations, companyNa
     const radarData = Object.values(domainStats).map(s => (s.soma / s.count).toFixed(1));
 
     function getRiskLabel(score) {
-        if (score >= 75) return { label: 'Baixo', color: '#27AE60' };
-        if (score >= 50) return { label: 'Médio', color: '#F39C12' };
-        return { label: 'Alto', color: '#E74C3C' };
+        if (score >= 75) return { label: 'Condição Satisfatória/Segura', color: '#27AE60' };
+        if (score >= 50) return { label: 'Risco Psicossocial Moderado', color: '#F39C12' };
+        return { label: 'Risco Psicossocial Elevado', color: '#E74C3C' };
     }
 
     const tableRows = Object.values(domainStats).map(domain => {
@@ -236,7 +236,7 @@ export async function generateConsolidatedTechnicalReport(evaluations, companyNa
 
         <section>
             <h2>Seção V — Conclusão Técnica e Próximos Passos</h2>
-            <p>Com base na amostra de ${copsoqEvals.length} colaboradores, o diagnóstico global sugere que a empresa deve priorizar intervenções nos domínios classificados como <b>Risco Alto</b>. Recomenda-se a elaboração de um plano de ação robusto focado em treinamentos de liderança, revisão dos processos de trabalho e canais de comunicação interna.</p>
+            <p>Com base na amostra de ${copsoqEvals.length} colaboradores, o diagnóstico global sugere que a empresa deve priorizar intervenções nos domínios classificados como <b>Risco Psicossocial Elevado</b>. Recomenda-se a elaboração de um plano de ação robusto focado em treinamentos de liderança, revisão dos processos de trabalho e canais de comunicação interna.</p>
             <p style="text-align: center; margin-top: 50px;">
                 <span style="border-top: 1px solid #1b4d3e; padding-top: 5px; width: 250px; display: inline-block;">
                     Tatiana Coaracy<br>Engenheira de Seg. do Trabalho

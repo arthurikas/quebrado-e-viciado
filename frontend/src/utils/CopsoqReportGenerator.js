@@ -57,9 +57,9 @@ export async function generateCopsoqReport(results, personData) {
                 // 2. METODOLOGIA
                 createHeading1("2. METODOLOGIA"),
                 new Paragraph("A avaliação baseada no COPSOQ II (Versão Brasileira) analisa os riscos psicossociais no trabalho. As respostas são convertidas para uma escala de 0 a 100."),
-                new Paragraph("• 0-49 (Risco Elevado - Vermelho): Situação crítica, risco à saúde."),
-                new Paragraph("• 50-74 (Risco Moderado - Amarelo): Situação de alerta."),
-                new Paragraph("• 75-100 (Condição Satisfatória - Verde): Situação favorável (proteção)."),
+                new Paragraph("• 0-49 (Risco Psicossocial Elevado - Vermelho): Situação crítica, risco à saúde."),
+                new Paragraph("• 50-74 (Risco Psicossocial Moderado - Amarelo): Situação de alerta."),
+                new Paragraph("• 75-100 (Condição Satisfatória/Segura - Verde): Situação favorável (proteção)."),
                 new Paragraph({ text: "" }),
 
                 // 3. VISÃO GERAL
@@ -154,7 +154,7 @@ function generateDiagnosis(scores) {
     const critical = Object.values(scores).filter(d => d.media < 50);
 
     if (critical.length > 0) {
-        paragraphs.push(new Paragraph("Fatores de Atenção Prioritária (Alto Risco):"));
+        paragraphs.push(new Paragraph("Fatores de Atenção Prioritária (Risco Psicossocial Elevado):"));
         critical.forEach(d => {
             paragraphs.push(new Paragraph({
                 children: [

@@ -68,13 +68,13 @@ export function calcularResultadosCopsoq(respostas) {
         // Isso confirma que a escala final é: 0 = Ruim, 100 = Bom.
 
         if (media < 50) {
-            classificacao = 'Risco Elevado';
+            classificacao = 'Risco Psicossocial Elevado';
             cor = '#E74C3C'; // Vermelho
         } else if (media < 75) {
-            classificacao = 'Risco Moderado';
+            classificacao = 'Risco Psicossocial Moderado';
             cor = '#F39C12'; // Laranja/Amarelo
         } else {
-            classificacao = 'Condição Satisfatória';
+            classificacao = 'Condição Satisfatória/Segura';
             cor = '#27AE60'; // Verde
         }
 

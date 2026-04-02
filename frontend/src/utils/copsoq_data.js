@@ -128,6 +128,16 @@ export const COPSOQ_DOMAINS = {
         perguntas: [14, 15, 16],
         tipo: "positivas"
     },
+    "possibilidades_desenvolvimento": {
+        nome: "Possibilidades de Desenvolvimento",
+        perguntas: [17, 18, 19],
+        tipo: "positivas"
+    },
+    "significado_trabalho": {
+        nome: "Significado do Trabalho",
+        perguntas: [20, 21, 22],
+        tipo: "positivas"
+    },
     "clareza_papel": {
         nome: "Clareza de Papel",
         perguntas: [23, 24, 25],
@@ -161,6 +171,11 @@ export const COPSOQ_DOMAINS = {
     "feedback_trabalho": {
         nome: "Feedback sobre o Trabalho",
         perguntas: [41, 42, 43],
+        tipo: "positivas"
+    },
+    "qualidade_lideranca": {
+        nome: "Qualidade da Liderança",
+        perguntas: [44, 45, 46],
         tipo: "positivas"
     },
     "justica_organizacional": {
