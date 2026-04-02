@@ -13,6 +13,7 @@ import AdminDashboard from './components/AdminDashboard';
 import AdminEmpresasPanel from './components/AdminEmpresasPanel';
 import AdminColaboradoresPanel from './components/AdminColaboradoresPanel';
 import AepDashboard from './components/AepDashboard';
+import { normalizeJobTitle, normalizeSector } from './utils/normalizer';
 import './App.css';
 
 // Audit Log View Component
@@ -126,8 +127,8 @@ function AppContent() {
         userId: ev.created_by || 'guest',
         person: {
           name: ev.employees?.full_name || 'Anônimo',
-          role: ev.employees?.job_function || '',
-          sector: ev.employees?.sector_parish || '',
+          role: normalizeJobTitle(ev.employees?.job_function || ''),
+          sector: normalizeSector(ev.employees?.sector_parish || ''),
           company_id: ev.company_id,
           gender: ev.employees?.sex || ev.full_data?.person?.gender || '',
           age: ev.employees?.age || ev.full_data?.person?.age || '',
