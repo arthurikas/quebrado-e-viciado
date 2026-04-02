@@ -7,6 +7,7 @@ import { useCompany } from '../context/CompanyContext';
 import { generateDashboardReport } from '../utils/DashboardReportGenerator';
 import { generateGeneralAnalyticalReport } from '../utils/DashboardGeneralReportGenerator';
 import { Loader2 } from 'lucide-react'; // For loading spinner
+import { normalizeJobTitle, normalizeSector } from '../utils/normalizer';
 
 const EMPTY_FILTERS = {
     assessmentType: '',
@@ -29,31 +30,44 @@ export default function Dashboard({ evaluationsList = [], onBack }) {
     // Applied filters (what actually drives the data)
     const [appliedFilters, setAppliedFilters] = useState(EMPTY_FILTERS);
 
-    // Derive unique sectors and roles from evaluationsList
-    const availableSectors = useMemo(() => {
+    // 0. Normalize evaluations exactly as they enter the dashboard
+    const normalizedEvaluations = useMemo(() => {
         if (!evaluationsList || evaluationsList.length === 0) return [];
+        return evaluationsList.map(ev => ({
+            ...ev,
+            person: ev.person ? {
+                ...ev.person,
+                role: normalizeJobTitle(ev.person.role),
+                sector: normalizeSector(ev.person.sector)
+            } : ev.person
+        }));
+    }, [evaluationsList]);
+
+    // Derive unique sectors and roles from normalized evaluations
+    const availableSectors = useMemo(() => {
+        if (!normalizedEvaluations || normalizedEvaluations.length === 0) return [];
         const set = new Set();
-        evaluationsList.forEach(ev => {
+        normalizedEvaluations.forEach(ev => {
             const s = ev.person?.sector;
             if (s && s.trim()) set.add(s.trim());
         });
         return Array.from(set).sort();
-    }, [evaluationsList]);
+    }, [normalizedEvaluations]);
 
     const availableRoles = useMemo(() => {
-        if (!evaluationsList || evaluationsList.length === 0) return [];
+        if (!normalizedEvaluations || normalizedEvaluations.length === 0) return [];
         const set = new Set();
-        evaluationsList.forEach(ev => {
+        normalizedEvaluations.forEach(ev => {
             const r = ev.person?.role;
             if (r && r.trim()) set.add(r.trim());
         });
         return Array.from(set).sort();
-    }, [evaluationsList]);
+    }, [normalizedEvaluations]);
 
     // 1. Filter Data using APPLIED filters
     const filteredData = useMemo(() => {
-        if (!evaluationsList || evaluationsList.length === 0) return [];
-        return filterData(evaluationsList, {
+        if (!normalizedEvaluations || normalizedEvaluations.length === 0) return [];
+        return filterData(normalizedEvaluations, {
             type: appliedFilters.assessmentType || null,
             sectorId: appliedFilters.sector || null,
             roleId: appliedFilters.role || null,
