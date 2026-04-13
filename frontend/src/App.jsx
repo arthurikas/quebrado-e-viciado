@@ -14,6 +14,7 @@ import AdminEmpresasPanel from './components/AdminEmpresasPanel';
 import AdminColaboradoresPanel from './components/AdminColaboradoresPanel';
 import AepDashboard from './components/AepDashboard';
 import { normalizeJobTitle, normalizeSector } from './utils/normalizer';
+import { calcularResultadosCopsoq } from './utils/copsoq_calculations';
 import './App.css';
 
 // Audit Log View Component
@@ -120,23 +121,41 @@ function AppContent() {
 
       if (error) throw error;
 
-      const formattedEvals = data.map(ev => ({
-        id: ev.id,
-        type: ev.type || (ev.notes?.includes('COPSOQ') ? 'COPSOQ' : 'AEP'),
-        companyId: ev.company_id,
-        userId: ev.created_by || 'guest',
-        person: {
-          name: ev.employees?.full_name || 'Anônimo',
-          role: normalizeJobTitle(ev.employees?.job_function || ''),
-          sector: normalizeSector(ev.employees?.sector_parish || ''),
-          company_id: ev.company_id,
-          gender: ev.employees?.sex || ev.full_data?.person?.gender || '',
-          age: ev.employees?.age || ev.full_data?.person?.age || '',
-          tenure: (ev.employees?.tenure_years ?? parseFloat(ev.full_data?.person?.tenure)) || 0,
-          date: ev.evaluation_date
-        },
-        ...ev.full_data // Contains responses and results
-      }));
+      const formattedEvals = data.map(ev => {
+        const fullData = ev.full_data || {};
+        const evType = ev.type || (ev.notes?.includes('COPSOQ') ? 'COPSOQ' : 'AEP');
+
+        // Recalculate COPSOQ results from raw responses to fix any historical
+        // calculation errors (e.g. missing scale inversion for negative questions)
+        let correctedResults = fullData.results;
+        let correctedPontuacao = fullData.pontuacao_geral;
+        if (evType === 'COPSOQ' && fullData.responses) {
+          const recalc = calcularResultadosCopsoq(fullData.responses);
+          correctedResults = recalc.dominios;
+          correctedPontuacao = recalc.mediaGeral;
+        }
+
+        return {
+          id: ev.id,
+          type: evType,
+          companyId: ev.company_id,
+          userId: ev.created_by || 'guest',
+          person: {
+            name: ev.employees?.full_name || 'Anônimo',
+            role: normalizeJobTitle(ev.employees?.job_function || ''),
+            sector: normalizeSector(ev.employees?.sector_parish || ''),
+            company_id: ev.company_id,
+            gender: ev.employees?.sex || fullData.person?.gender || '',
+            age: ev.employees?.age || fullData.person?.age || '',
+            tenure: (ev.employees?.tenure_years ?? parseFloat(fullData.person?.tenure)) || 0,
+            date: ev.evaluation_date
+          },
+          ...fullData,
+          // Override results/pontuacao with correctly re-calculated values
+          results: correctedResults,
+          pontuacao_geral: correctedPontuacao
+        };
+      });
 
       setEvaluations(formattedEvals);
     } catch (error) {
@@ -536,7 +555,8 @@ function AppContent() {
                         {ev.type === 'COPSOQ' && (
                           <button className="btn-secondary" style={{ padding: '0.25rem 0.5rem', fontSize: '0.8rem' }} onClick={async () => {
                             const { generateCopsoqHtmlReport } = await import('./utils/CopsoqTechnicalReportGenerator');
-                            generateCopsoqHtmlReport(ev.results, {
+                            // Use already-corrected results (recalculated at load time from raw responses)
+                            generateCopsoqHtmlReport({ dominios: ev.results }, {
                               ...ev.person,
                               company_name: ev.person.company || activeCompany?.nome,
                               avaliador: ev.person.avaliador || profile?.nome_completo,
