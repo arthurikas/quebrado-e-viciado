@@ -353,18 +353,32 @@ export default function AdminEmpresasPanel({ onBack }) {
                                                 {empresa.perfis?.[0]?.count || 0} colaborador(es)
                                             </div>
                                             {empresa.hash_link && (
-                                                <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f0f4f8', padding: '0.5rem', borderRadius: '4px' }}>
-                                                    <strong style={{ color: '#1b4d3e' }}>Link Único:</strong> 
-                                                    <a href={`${window.location.origin}/?url=${empresa.hash_link}`} target="_blank" rel="noopener noreferrer" style={{ color: '#3498DB', textDecoration: 'none' }}>
-                                                        {window.location.origin}/?url={empresa.hash_link}
+                                                <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f0f4f8', padding: '0.5rem 0.75rem', borderRadius: '4px' }}>
+                                                    <strong style={{ color: '#1b4d3e', whiteSpace: 'nowrap' }}>Link Único:</strong>
+                                                    <a
+                                                        href={`${window.location.origin}/?url=${empresa.hash_link}`}
+                                                        target="_blank"
+                                                        rel="noopener noreferrer"
+                                                        title={`${window.location.origin}/?url=${empresa.hash_link}`}
+                                                        style={{
+                                                            color: '#3498DB',
+                                                            textDecoration: 'none',
+                                                            fontWeight: 600,
+                                                            overflow: 'hidden',
+                                                            textOverflow: 'ellipsis',
+                                                            whiteSpace: 'nowrap',
+                                                            maxWidth: '280px'
+                                                        }}
+                                                    >
+                                                        🔗 {empresa.nome}
                                                     </a>
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             navigator.clipboard.writeText(`${window.location.origin}/?url=${empresa.hash_link}`);
                                                             showMessage('success', 'Link copiado para a área de transferência!');
                                                         }}
-                                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px', color: '#666', display: 'flex', alignItems: 'center' }}
-                                                        title="Copiar Link"
+                                                        style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', color: '#666', display: 'flex', alignItems: 'center', flexShrink: 0 }}
+                                                        title={`Copiar link: ${window.location.origin}/?url=${empresa.hash_link}`}
                                                     >
                                                         <Copy size={14} />
                                                     </button>
