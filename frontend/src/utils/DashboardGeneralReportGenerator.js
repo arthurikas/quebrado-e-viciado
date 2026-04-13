@@ -7,6 +7,7 @@ import { saveAs } from 'file-saver';
 import { Chart, registerables } from 'chart.js';
 import { COPSOQ_QUESTIONS } from './copsoq_data.js';
 import { buildTechnicalReportIntro } from './ReportIntroGenerator.js';
+import { calcularPontuacaoQuestao } from './copsoq_calculations.js';
 
 Chart.register(...registerables);
 
@@ -49,11 +50,6 @@ function getRiskLevel(score) {
     if (score >= 75) return 'Baixo';
     if (score >= 50) return 'Médio';
     return 'Alto';
-}
-
-// Converte valor COPSOQ (1–5) em índice 0–100
-function responseToIndex(val) {
-    return ((val - 1) / 4) * 100;
 }
 
 // Plugin: percentuais em branco negrito dentro das fatias
@@ -417,7 +413,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
                 const resp = ev.responses[qId];
                 if (resp !== undefined && resp !== null) {
                     const val = parseInt(resp, 10);
-                    if (!isNaN(val) && val >= 1 && val <= 5) return responseToIndex(val);
+                    if (!isNaN(val) && val >= 1 && val <= 5) return calcularPontuacaoQuestao(qId, val);
                 }
                 return null;
             }).filter(s => s !== null);
@@ -458,7 +454,7 @@ export async function generateGeneralAnalyticalReport(evaluations, companyName) 
                     const resp = ev.responses[qId];
                     if (resp !== undefined && resp !== null) {
                         const val = parseInt(resp, 10);
-                        if (!isNaN(val) && val >= 1 && val <= 5) return responseToIndex(val);
+                        if (!isNaN(val) && val >= 1 && val <= 5) return calcularPontuacaoQuestao(qId, val);
                     }
                     return null;
                 }).filter(s => s !== null);
