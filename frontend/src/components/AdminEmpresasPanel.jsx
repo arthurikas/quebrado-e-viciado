@@ -84,6 +84,7 @@ export default function AdminEmpresasPanel({ onBack }) {
                     nome: newEmpresa.nome,
                     cnpj: newEmpresa.cnpj,
                     ativo: true,
+                    link_ativo: true,
                     hash_link: generateHash()
                 }])
                 .select();
@@ -155,6 +156,24 @@ export default function AdminEmpresasPanel({ onBack }) {
         } catch (error) {
             console.error('Erro ao alterar status:', error);
             showMessage('error', 'Erro ao alterar status da empresa');
+        }
+    };
+
+    const handleToggleLink = async (empresa) => {
+        try {
+            const currentLinkStatus = empresa.link_ativo !== false; // default is true if null
+            const { error } = await supabase
+                .from('empresas')
+                .update({ link_ativo: !currentLinkStatus })
+                .eq('id', empresa.id);
+
+            if (error) throw error;
+
+            showMessage('success', `Link da empresa ${!currentLinkStatus ? 'ativado' : 'pausado'} com sucesso!`);
+            loadEmpresas();
+        } catch (error) {
+            console.error('Erro ao alterar status do link:', error);
+            showMessage('error', 'Erro ao alterar status do link da empresa');
         }
     };
 
@@ -361,13 +380,14 @@ export default function AdminEmpresasPanel({ onBack }) {
                                                         rel="noopener noreferrer"
                                                         title={`${window.location.origin}/?url=${empresa.hash_link}`}
                                                         style={{
-                                                            color: '#3498DB',
-                                                            textDecoration: 'none',
+                                                            color: empresa.link_ativo !== false ? '#3498DB' : '#888',
+                                                            textDecoration: empresa.link_ativo !== false ? 'none' : 'line-through',
                                                             fontWeight: 600,
                                                             overflow: 'hidden',
                                                             textOverflow: 'ellipsis',
                                                             whiteSpace: 'nowrap',
-                                                            maxWidth: '280px'
+                                                            maxWidth: '280px',
+                                                            pointerEvents: empresa.link_ativo !== false ? 'auto' : 'none'
                                                         }}
                                                     >
                                                         🔗 {empresa.nome}
@@ -379,8 +399,26 @@ export default function AdminEmpresasPanel({ onBack }) {
                                                         }}
                                                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', color: '#666', display: 'flex', alignItems: 'center', flexShrink: 0 }}
                                                         title={`Copiar link: ${window.location.origin}/?url=${empresa.hash_link}`}
+                                                        disabled={empresa.link_ativo === false}
                                                     >
                                                         <Copy size={14} />
+                                                    </button>
+                                                    
+                                                    <button
+                                                        onClick={() => handleToggleLink(empresa)}
+                                                        style={{
+                                                            marginLeft: 'auto',
+                                                            padding: '0.2rem 0.6rem',
+                                                            borderRadius: '4px',
+                                                            border: 'none',
+                                                            background: empresa.link_ativo !== false ? '#ffecb3' : '#d4edda',
+                                                            color: empresa.link_ativo !== false ? '#856404' : '#155724',
+                                                            cursor: 'pointer',
+                                                            fontSize: '0.75rem',
+                                                            fontWeight: 600
+                                                        }}
+                                                    >
+                                                        {empresa.link_ativo !== false ? 'Pausar Link' : 'Ativar Link'}
                                                     </button>
                                                 </div>
                                             )}

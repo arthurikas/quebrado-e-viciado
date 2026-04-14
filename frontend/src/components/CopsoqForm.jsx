@@ -44,7 +44,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                     console.log("Validating hash string:", hash);
                     const { data, error } = await supabase
                         .from('empresas')
-                        .select('id, nome, ativo')
+                        .select('id, nome, ativo, link_ativo')
                         .eq('hash_link', hash)
                         .single();
                     
@@ -52,7 +52,7 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                          console.error("Supabase error fetching hash:", error);
                     }
                     
-                    if (data && data.ativo) {
+                    if (data && data.ativo && data.link_ativo !== false) {
                         console.log("Valid company found:", data.nome);
                         // We must set it exactly as the others
                         setPersonData(prev => ({
@@ -63,7 +63,10 @@ const CopsoqForm = ({ onFinish, onCancel }) => {
                         setHasUniqueLink(true);
                     } else if (data && !data.ativo) {
                         console.warn("Company is inactive.");
-                        setError("O link desta empresa foi desativado.");
+                        setError("A empresa responsável por este link foi desativada.");
+                    } else if (data && data.link_ativo === false) {
+                        console.warn("Company link is paused.");
+                        setError("O formulário para esta empresa não está aceitando novas respostas no momento (link pausado).");
                     }
                 } catch (e) {
                     console.error("Erro ao validar link único:", e);
