@@ -268,7 +268,11 @@ export default function AdminEmpresasPanel({ onBack }) {
                     </p>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {empresas.map((empresa) => (
+                        {empresas.map((empresa) => {
+                            const slug = empresa.nome ? empresa.nome.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+|-+$/g, '') : 'empresa';
+                            const linkUrl = `${window.location.origin}/?cliente=${slug}&url=${empresa.hash_link}`;
+                            
+                            return (
                             <div
                                 key={empresa.id}
                                 style={{
@@ -375,10 +379,10 @@ export default function AdminEmpresasPanel({ onBack }) {
                                                 <div style={{ marginTop: '0.5rem', fontSize: '0.85rem', display: 'flex', alignItems: 'center', gap: '0.5rem', background: '#f0f4f8', padding: '0.5rem 0.75rem', borderRadius: '4px' }}>
                                                     <strong style={{ color: '#1b4d3e', whiteSpace: 'nowrap' }}>Link Único:</strong>
                                                     <a
-                                                        href={`${window.location.origin}/?url=${empresa.hash_link}`}
+                                                        href={linkUrl}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        title={`${window.location.origin}/?url=${empresa.hash_link}`}
+                                                        title={linkUrl}
                                                         style={{
                                                             color: empresa.link_ativo !== false ? '#3498DB' : '#888',
                                                             textDecoration: empresa.link_ativo !== false ? 'none' : 'line-through',
@@ -394,11 +398,11 @@ export default function AdminEmpresasPanel({ onBack }) {
                                                     </a>
                                                     <button
                                                         onClick={() => {
-                                                            navigator.clipboard.writeText(`${window.location.origin}/?url=${empresa.hash_link}`);
+                                                            navigator.clipboard.writeText(linkUrl);
                                                             showMessage('success', 'Link copiado para a área de transferência!');
                                                         }}
                                                         style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '2px 4px', color: '#666', display: 'flex', alignItems: 'center', flexShrink: 0 }}
-                                                        title={`Copiar link: ${window.location.origin}/?url=${empresa.hash_link}`}
+                                                        title={`Copiar link: ${linkUrl}`}
                                                         disabled={empresa.link_ativo === false}
                                                     >
                                                         <Copy size={14} />
@@ -451,7 +455,7 @@ export default function AdminEmpresasPanel({ onBack }) {
                                     </div>
                                 )}
                             </div>
-                        ))}
+                        )})}
                     </div>
                 )}
             </div>
