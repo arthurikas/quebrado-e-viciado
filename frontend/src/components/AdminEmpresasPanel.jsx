@@ -9,6 +9,11 @@ export default function AdminEmpresasPanel({ onBack }) {
     const [editForm, setEditForm] = useState({});
     const [newEmpresa, setNewEmpresa] = useState({ nome: '', cnpj: '' });
     const [message, setMessage] = useState({ type: '', text: '' });
+    
+    // Pagination and search
+    const [searchTerm, setSearchTerm] = useState('');
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 20;
 
     useEffect(() => {
         loadEmpresas();
@@ -177,6 +182,18 @@ export default function AdminEmpresasPanel({ onBack }) {
         }
     };
 
+    const filteredEmpresas = empresas.filter(empresa => {
+        const term = searchTerm.toLowerCase();
+        return (
+            (empresa.nome && empresa.nome.toLowerCase().includes(term)) ||
+            (empresa.cnpj && empresa.cnpj.includes(term))
+        );
+    });
+
+    const totalPages = Math.ceil(filteredEmpresas.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedEmpresas = filteredEmpresas.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
     if (loading) {
         return (
             <div className="card">
@@ -259,16 +276,36 @@ export default function AdminEmpresasPanel({ onBack }) {
             {/* Lista de Empresas */}
             <div>
                 <h3 style={{ fontSize: '1.1rem', marginBottom: '1rem' }}>
-                    Empresas Cadastradas ({empresas.length})
+                    Empresas Cadastradas ({filteredEmpresas.length})
                 </h3>
 
-                {empresas.length === 0 ? (
+                {/* Filtro de Busca */}
+                <div style={{ marginBottom: '1.5rem' }}>
+                    <input
+                        type="text"
+                        placeholder="Buscar por Razão Social ou CNPJ..."
+                        value={searchTerm}
+                        onChange={(e) => {
+                            setSearchTerm(e.target.value);
+                            setCurrentPage(1);
+                        }}
+                        style={{
+                            width: '100%',
+                            padding: '0.75rem',
+                            borderRadius: '6px',
+                            border: '2px solid #e0e0e0',
+                            fontSize: '0.95rem'
+                        }}
+                    />
+                </div>
+
+                {paginatedEmpresas.length === 0 ? (
                     <p style={{ color: '#888', textAlign: 'center', padding: '2rem' }}>
-                        Nenhuma empresa cadastrada ainda
+                        Nenhuma empresa encontrada
                     </p>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                        {empresas.map((empresa) => {
+                        {paginatedEmpresas.map((empresa) => {
                             const slug = empresa.nome ? empresa.nome.toString().toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-').replace(/[^\w\-]+/g, '').replace(/\-\-+/g, '-').replace(/^-+|-+$/g, '') : 'empresa';
                             const linkUrl = `${window.location.origin}/?cliente=${slug}&url=${empresa.hash_link}`;
                             
@@ -456,6 +493,31 @@ export default function AdminEmpresasPanel({ onBack }) {
                                 )}
                             </div>
                         )})}
+                    </div>
+                )}
+
+                {/* Paginação */}
+                {totalPages > 1 && (
+                    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '1rem', marginTop: '2rem' }}>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
+                            disabled={currentPage === 1}
+                            className="btn-secondary"
+                            style={{ padding: '0.5rem 1rem', opacity: currentPage === 1 ? 0.5 : 1, cursor: currentPage === 1 ? 'not-allowed' : 'pointer' }}
+                        >
+                            Anterior
+                        </button>
+                        <span style={{ fontSize: '0.9rem', color: '#666', fontWeight: 600 }}>
+                            Página {currentPage} de {totalPages}
+                        </span>
+                        <button
+                            onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
+                            disabled={currentPage === totalPages}
+                            className="btn-secondary"
+                            style={{ padding: '0.5rem 1rem', opacity: currentPage === totalPages ? 0.5 : 1, cursor: currentPage === totalPages ? 'not-allowed' : 'pointer' }}
+                        >
+                            Próxima
+                        </button>
                     </div>
                 )}
             </div>
