@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { supabase } from '../config/supabaseClient';
-import { Building2, Edit2, Save, X, Plus, Users, CheckCircle, XCircle, Copy } from 'lucide-react';
+import { Building2, Edit2, Save, X, Plus, Users, CheckCircle, XCircle, Copy, Trash2 } from 'lucide-react';
 
 export default function AdminEmpresasPanel({ onBack }) {
     const [empresas, setEmpresas] = useState([]);
@@ -179,6 +179,31 @@ export default function AdminEmpresasPanel({ onBack }) {
         } catch (error) {
             console.error('Erro ao alterar status do link:', error);
             showMessage('error', 'Erro ao alterar status do link da empresa');
+        }
+    };
+
+    const handleDelete = async (empresa) => {
+        if (!window.confirm(`Tem certeza que deseja excluir permanentemente a empresa "${empresa.nome}"? Esta ação não pode ser desfeita.`)) {
+            return;
+        }
+
+        try {
+            const { error } = await supabase
+                .from('empresas')
+                .delete()
+                .eq('id', empresa.id);
+
+            if (error) throw error;
+
+            showMessage('success', 'Empresa excluída com sucesso!');
+            loadEmpresas();
+        } catch (error) {
+            console.error('Erro ao excluir empresa:', error);
+            if (error.code === '23503') {
+                showMessage('error', 'Não é possível excluir esta empresa pois existem dados vinculados a ela.');
+            } else {
+                showMessage('error', 'Erro ao excluir empresa');
+            }
         }
     };
 
@@ -487,6 +512,26 @@ export default function AdminEmpresasPanel({ onBack }) {
                                                 }}
                                             >
                                                 {empresa.ativo ? 'Desativar' : 'Ativar'}
+                                            </button>
+                                            <button
+                                                onClick={() => handleDelete(empresa)}
+                                                style={{
+                                                    padding: '0.5rem 1rem',
+                                                    borderRadius: '6px',
+                                                    border: 'none',
+                                                    background: '#fee2e2',
+                                                    color: '#991b1b',
+                                                    cursor: 'pointer',
+                                                    fontSize: '0.85rem',
+                                                    fontWeight: 600,
+                                                    display: 'flex',
+                                                    alignItems: 'center',
+                                                    gap: '0.5rem'
+                                                }}
+                                                title="Excluir Empresa"
+                                            >
+                                                <Trash2 size={14} />
+                                                Excluir
                                             </button>
                                         </div>
                                     </div>
