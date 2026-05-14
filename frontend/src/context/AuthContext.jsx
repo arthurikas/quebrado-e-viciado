@@ -12,14 +12,13 @@ export const useAuth = () => {
 };
 
 export const AuthProvider = ({ children }) => {
-    const [user, setUser] = useState({ id: '8e08166f-0cf8-4175-b413-73ae27fe0c0d', email: 'offline@normalizze' });
-    const [profile, setProfile] = useState({ id: '8e08166f-0cf8-4175-b413-73ae27fe0c0d', tipo_acesso: 'admin', nome_completo: 'Modo Offline (Bypass)' });
-    const [isAuthenticated, setIsAuthenticated] = useState(true);
-    const [loading, setLoading] = useState(false);
+    const [user, setUser] = useState(null);
+    const [profile, setProfile] = useState(null);
+    const [isAuthenticated, setIsAuthenticated] = useState(false);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // BYPASS MODO OFFLINE: Retorna imediatamente para não sobrescrever a sessão mockada
-        return;
+        // let ignore = false; // Removido bypass
         
         let ignore = false;
         
